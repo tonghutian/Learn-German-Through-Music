@@ -50,7 +50,12 @@ def pair_audio(lrc: Path):
     return None
 
 
-def call_ollama(model: str, prompt: str, timeout: int = 300):
+def call_ollama(model: str, prompt: str, timeout: int = 600, retries: int = 2):
+    """Call local Ollama, allowing slow first-loads on a MacBook.
+
+    Qwen3 8B can take several minutes to load the first time. The old 30-second
+    health check caused false failures even though Ollama itself was working.
+    """
     payload = {
         'model': model,
         'messages': [
@@ -60,18 +65,28 @@ def call_ollama(model: str, prompt: str, timeout: int = 300):
         'stream': False,
         'options': {'temperature': 0.05, 'num_ctx': 4096}
     }
-    req = urllib.request.Request(OLLAMA_URL, data=json.dumps(payload, ensure_ascii=False).encode('utf-8'), headers={'Content-Type':'application/json'})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        data = json.loads(r.read().decode('utf-8'))
-    text = ((data.get('message') or {}).get('content') or '').strip()
-    text = re.sub(r'^```json\s*|\s*```$', '', text, flags=re.I).strip()
-    try:
-        return json.loads(text)
-    except Exception:
-        start, end = text.find('{'), text.rfind('}')
-        if start >= 0 and end > start:
-            return json.loads(text[start:end+1])
-        raise ValueError('Model did not return valid JSON')
+    last_error = None
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(OLLAMA_URL, data=json.dumps(payload, ensure_ascii=False).encode('utf-8'), headers={'Content-Type':'application/json'})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = json.loads(r.read().decode('utf-8'))
+            text = ((data.get('message') or {}).get('content') or '').strip()
+            text = re.sub(r'^```json\s*|\s*```$', '', text, flags=re.I).strip()
+            try:
+                return json.loads(text)
+            except Exception:
+                start, end = text.find('{'), text.rfind('}')
+                if start >= 0 and end > start:
+                    return json.loads(text[start:end+1])
+                raise ValueError('Model did not return valid JSON')
+        except Exception as e:
+            last_error = e
+            if attempt < retries:
+                wait = 5 * (attempt + 1)
+                print(f'    Ollama call failed ({e}); retrying in {wait}s...', file=sys.stderr)
+                time.sleep(wait)
+    raise last_error
 
 
 def review_lines(model, musical, song, lines, batch_size):
@@ -161,10 +176,11 @@ def main():
     if not music.exists():
         raise SystemExit(f'Music directory not found: {music}')
 
+    print(f'Checking Ollama (up to 10 minutes for a slow first model load)...')
     try:
-        call_ollama(args.model, 'Reply with {"ok":true}', timeout=30)
+        call_ollama(args.model, 'Reply with {"ok":true}', timeout=600, retries=2)
     except Exception as e:
-        print(f'Ollama is not reachable: {e}', file=sys.stderr)
+        print(f'Ollama is not reachable after retries: {e}', file=sys.stderr)
         raise SystemExit(1)
 
     dirs = [p for p in music.iterdir() if p.is_dir()]
