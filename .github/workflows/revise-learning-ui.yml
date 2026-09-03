@@ -1,8 +1,9 @@
 name: Revise learning UI
 on:
-  push:
-    paths: ['.github/workflows/revise-learning-ui.yml']
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/revise-learning-ui.yml'
 jobs:
   patch:
     runs-on: ubuntu-latest
@@ -11,70 +12,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Patch index
+        shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          # Search mode: words, lyrics, translations, or all.
-          old='<select id="wordsLevel"><option value="">All levels</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select><input id="wordsSearch" class="grow" placeholder="Search word, translation, lyric or song…">'
-          new='<select id="wordsLevel"><option value="">All levels</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select><select id="wordsSearchField"><option value="all">Search: All</option><option value="word">Words only</option><option value="lyrics">Lyrics only</option><option value="translation">Translations only</option></select><input id="wordsSearch" class="grow" placeholder="Search…">'
-          s=s.replace(old,new)
-          # Show learning status in All Words.
-          s=s.replace('<th>German</th><th>Level</th><th>English</th><th>Lyric line</th><th>Song</th><th>Audio</th><th>Edit</th>','<th>German</th><th>Level</th><th>Status</th><th>English</th><th>Lyric line</th><th>Song</th><th>Audio</th><th>Edit</th>')
-          # Add status display to card front/back by injecting into existing level tag.
-          s=s.replace('<span class="leveltag">${esc(c.level)}</span>','<span class="leveltag">${esc(c.level)} · ${c.mastered ? \'Learned\' : (c.reps>0 ? \'Learning\' : \'New\')}</span>')
-          # Add status filter to study setup.
-          s=s.replace('<select id="studyMode"><option value="due">New + due</option><option value="all">All words</option><option value="weak">Not mastered</option></select>','<select id="studyMode"><option value="due">New + due</option><option value="all">All words</option><option value="weak">Learning</option><option value="mastered">Learned</option></select>')
-          # Replace search predicate if present.
-          oldpred="const q=($('wordsSearch').value||'').trim().toLowerCase();"
-          if oldpred in s:
-              s=s.replace(oldpred, oldpred+" const sf=$('wordsSearchField')?.value||'all';")
-          # Common predicate form used by the current table renderer.
-          s=s.replace("(!q || [c.word,c.translation,c.line,c.song].some(v=>String(v||'').toLowerCase().includes(q)))", "(!q || (sf==='word' ? String(c.word||'').toLowerCase().includes(q) : sf==='lyrics' ? String(c.line||'').toLowerCase().includes(q) : sf==='translation' ? String(c.translation||'').toLowerCase().includes(q) : [c.word,c.translation,c.line].some(v=>String(v||'').toLowerCase().includes(q))))")
-          # Persist selected search field while typing/changing.
-          marker="$('wordsSearch').oninput=()=>{pageNo=1;renderWords()};"
-          if marker in s and "wordsSearchField" not in s[s.find(marker)-200:s.find(marker)+300]:
-              s=s.replace(marker, "$('wordsSearch').oninput=()=>{pageNo=1;renderWords()}; $('wordsSearchField').onchange=()=>{pageNo=1;renderWords()};")
-          # Ensure search is limited to the requested four fields, not song title.
-          s=s.replace("[c.word,c.translation,c.line,c.song]", "[c.word,c.translation,c.line]")
-          # Inject a robust behavior layer before the final closing body tag.
-          marker='</body>\n</html>'
-          addon=r'''<script>
-(function(){
-  // Learning status: New -> Learning -> Learned. Keep the existing progress format.
-  function statusOf(c){return c.mastered ? 'Learned' : ((c.reps||0)>0 ? 'Learning' : 'New')}
-  function esc2(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  function refreshStatusBadges(){
-    document.querySelectorAll('[data-card-status]').forEach(el=>{const id=el.dataset.cardStatus;const c=(window.cards||[]).find(x=>x.id===id);if(c)el.textContent=statusOf(c)})
-  }
-  // Backup/restore of saved learning data.
-  function addBackup(){
-    if(document.getElementById('backupPanel')) return;
-    const panel=document.createElement('div');panel.id='backupPanel';panel.className='notice';panel.style.margin='16px 0';
-    panel.innerHTML='<b>Saved data</b><div class="muted" style="margin:5px 0 9px">Download a backup of your learning progress and personal edits, or restore one later.</div><div class="row"><button class="btn ghost" id="downloadSaved">Download saved data</button><label class="btn ghost" for="restoreSaved" style="cursor:pointer">Restore saved data</label><input id="restoreSaved" type="file" accept="application/json,.json" style="display:none"></div>';
-    const parent=document.getElementById('wordsView')||document.getElementById('libraryView'); if(parent) parent.insertBefore(panel,parent.firstChild?.nextSibling||parent.firstChild);
-    document.getElementById('downloadSaved').onclick=()=>{const data={version:4,exportedAt:new Date().toISOString(),progress:JSON.parse(localStorage.getItem('ldm-progress-v4')||'{}')};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='learn-german-through-music-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
-    document.getElementById('restoreSaved').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);const prog=d.progress||d;if(!prog||typeof prog!=='object')throw Error('Invalid backup');if(!confirm('Restore this saved data? Your current browser progress will be replaced.'))return;localStorage.setItem('ldm-progress-v4',JSON.stringify(prog));location.reload()}catch(err){alert('Could not restore this backup: '+err.message)}};r.readAsText(f)};
-  }
-  // The matching quiz should use every word marked Learned in the current study section, not only the last 10-card group.
-  window.__learnedQuizPool=function(){return (window.queue||[]).filter(c=>c && c.mastered)};
-  // Make the private uploader open in a new tab.
-  document.querySelectorAll('a[href="https://tonghutian.github.io/german/"]').forEach(a=>{a.target='_blank';a.rel='noopener noreferrer'});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addBackup);else addBackup();
-})();
-</script>
-</body>
-</html>'''
-          if marker in s and '__learnedQuizPool' not in s:
-              s=s.replace(marker,addon)
-          p.write_text(s,encoding='utf-8')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('<select id="wordsLevel"><option value="">All levels</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select><input id="wordsSearch" class="grow" placeholder="Search word, translation, lyric or song…">', '<select id="wordsLevel"><option value="">All levels</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select><select id="wordsSearchField"><option value="all">Search: All</option><option value="word">Words only</option><option value="lyrics">Lyrics only</option><option value="translation">Translations only</option></select><input id="wordsSearch" class="grow" placeholder="Search…">')
+          s = s.replace('<th>German</th><th>Level</th><th>English</th><th>Lyric line</th><th>Song</th><th>Audio</th><th>Edit</th>', '<th>German</th><th>Level</th><th>Status</th><th>English</th><th>Lyric line</th><th>Song</th><th>Audio</th><th>Edit</th>')
+          s = s.replace('<select id="studyMode"><option value="due">New + due</option><option value="all">All words</option><option value="weak">Not mastered</option></select>', '<select id="studyMode"><option value="due">New + due</option><option value="all">All words</option><option value="weak">Learning</option><option value="mastered">Learned</option></select>')
+          old = "const q=($('wordsSearch').value||'').trim().toLowerCase();"
+          if old in s:
+              s = s.replace(old, old + " const sf=$('wordsSearchField')?.value||'all';")
+          old = "(!q || [c.word,c.translation,c.line,c.song].some(v=>String(v||'').toLowerCase().includes(q)))"
+          new = "(!q || (sf==='word' ? String(c.word||'').toLowerCase().includes(q) : sf==='lyrics' ? String(c.line||'').toLowerCase().includes(q) : sf==='translation' ? String(c.translation||'').toLowerCase().includes(q) : [c.word,c.translation,c.line].some(v=>String(v||'').toLowerCase().includes(q))))"
+          s = s.replace(old, new)
+          s = s.replace("$('wordsSearch').oninput=()=>{pageNo=1;renderWords()};", "$('wordsSearch').oninput=()=>{pageNo=1;renderWords()}; $('wordsSearchField').onchange=()=>{pageNo=1;renderWords()};")
+          marker = '</html>'
+          addon = '''\n<script>\n(function(){\nfunction statusOf(c){return c.mastered ? 'Learned' : ((c.reps||0)>0 ? 'Learning' : 'New')}\nfunction addBackup(){\n if(document.getElementById('backupPanel')) return;\n var panel=document.createElement('div'); panel.id='backupPanel'; panel.className='notice'; panel.style.margin='16px 0';\n panel.innerHTML='<b>Saved data</b><div class="muted" style="margin:5px 0 9px">Download your learning progress and personal edits, or restore them later.</div><div class="row"><button class="btn ghost" id="downloadSaved">Download saved data</button><label class="btn ghost" for="restoreSaved" style="cursor:pointer">Restore saved data</label><input id="restoreSaved" type="file" accept="application/json,.json" style="display:none"></div>';\n var parent=document.getElementById('wordsView') || document.getElementById('libraryView'); if(!parent) return; parent.insertBefore(panel,parent.firstChild);\n document.getElementById('downloadSaved').onclick=function(){var data={version:4,exportedAt:new Date().toISOString(),progress:JSON.parse(localStorage.getItem('ldm-progress-v4')||'{}')};var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='learn-german-through-music-backup.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000)};\n document.getElementById('restoreSaved').onchange=function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);var prog=d.progress||d;if(!prog||typeof prog!=='object')throw Error('Invalid backup');if(!confirm('Restore this saved data? Current browser progress will be replaced.'))return;localStorage.setItem('ldm-progress-v4',JSON.stringify(prog));location.reload()}catch(err){alert('Could not restore this backup: '+err.message)}};r.readAsText(f)};\n}\nfunction markCardStatus(){document.querySelectorAll('.leveltag').forEach(function(el){if(el.dataset.statusDone)return;var t=el.textContent||'';if(/^A[1-2]$|^B[1-2]$|^C[1-2]$/.test(t.trim())){el.dataset.statusDone='1';el.textContent=t+' · New'}})}\nfunction wire(){\n document.querySelectorAll('a[href="https://tonghutian.github.io/german/"]').forEach(function(a){a.target='_blank';a.rel='noopener noreferrer'});\n addBackup(); markCardStatus();\n}\nif(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();\n})();\n</script>\n'''
+          if 'id="backupPanel"' not in s:
+              s = s.replace(marker, addon + marker)
+          p.write_text(s, encoding='utf-8')
           PY
-      - name: Commit changes
+      - name: Commit patch
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add index.html
-          git diff --cached --quiet && exit 0
-          git commit -m "Improve learning status, search, and saved data UI"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Improve learning status search and backups"
           git push
