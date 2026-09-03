@@ -16,7 +16,7 @@ BEOLINGUS_SOURCE='https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-e
 def slug(s): return re.sub(r'[^a-z0-9]+','-',s.lower()).strip('-') or 'item'
 def title(s): return re.sub(r'^\d+[\s._-]*','',Path(s).stem).strip()
 def stem(s): return re.sub(r'\s+',' ',Path(s).stem.lower().replace('’',"'")).strip()
-def tokens(s): return re.findall(r'[A-Za-zÄÖÜäöüßÀ-ÿ]+(?:[’\'][A-Za-zÄÖÜäöüßÀ-ÿ]+)?',s)
+def tokens(s): return re.findall(r"[A-Za-zÄÖÜäöüßÀ-ÿ]+(?:[’'][A-Za-zÄÖÜäöüßÀ-ÿ]+)?",s)
 def lemma(w):
  l=w.lower(); m={'bin':'sein','bist':'sein','ist':'sein','sind':'sein','seid':'sein','war':'sein','waren':'sein','habe':'haben','hast':'haben','hat':'haben','habt':'haben','hatte':'haben','hatten':'haben','kann':'können','kannst':'können','könnt':'können','konnte':'können','muss':'müssen','musst':'müssen','musste':'müssen','mussten':'müssen','will':'wollen','willst':'wollen','wollt':'wollen','wollte':'wollen','wollten':'wollen','wird':'werden','wirst':'werden','wurde':'werden','finde':'finden','findest':'finden','findet':'finden','fand':'finden','geht':'gehen','ging':'gehen','kommt':'kommen','kam':'kommen','sagte':'sagen','sagt':'sagen','sah':'sehen','gesehen':'sehen','gibt':'geben','gab':'geben','nahm':'nehmen','genommen':'nehmen','macht':'machen','machte':'machen','gemacht':'machen','liebt':'lieben','liebte':'lieben','geliebt':'lieben','gesagt':'sagen','gesprochen':'sprechen','versteht':'verstehen','verstanden':'verstehen','verloren':'verlieren','gewonnen':'gewinnen','geträumt':'träumen','weinte':'weinen','gelacht':'lachen','singt':'singen','getanzt':'tanzen','steht':'stehen','gestanden':'stehen','sitzt':'sitzen','liegt':'liegen'}; return m.get(l,w)
 def lrc(path):
@@ -31,8 +31,8 @@ def lrc(path):
 
 def level_for(word, hit=None):
  if hit and hit.get('level') in LEVELS: return hit['level']
- w=word.lower();
  if hit and hit.get('level') in range(1,7): return LEVELS[hit['level']-1]
+ w=word.lower()
  if w in COMMON or len(w)<=3: return 'A1'
  if len(w)<=5: return 'A2'
  if len(w)<=8: return 'B1'
@@ -55,9 +55,7 @@ def extract_private_dict():
 def parse_beolingus_line(line):
  parts=line.split('::')
  if len(parts)<2: return []
- de_groups=parts[0].strip().split('|')
- en_groups='::'.join(parts[1:]).strip().split('|')
- out=[]
+ de_groups=parts[0].strip().split('|'); en_groups='::'.join(parts[1:]).strip().split('|'); out=[]
  for gi,dg in enumerate(de_groups):
   en_raw=(en_groups[gi] if gi<len(en_groups) else (en_groups[0] if en_groups else '')).strip()
   en_raw=re.sub(r'\{[^}]*\}|\[[^]]*\]|<[^>]*>','',en_raw)
@@ -86,20 +84,15 @@ def load_beolingus(target_words):
   print('Beolingus unavailable:',e); return {}
 
 def main():
- DATA.mkdir(exist_ok=True); CARDS.mkdir(exist_ok=True)
- private=extract_private_dict()
- musicals=[]
+ DATA.mkdir(exist_ok=True); CARDS.mkdir(exist_ok=True); private=extract_private_dict(); musicals=[]
  for md in sorted([p for p in MUSIC.iterdir() if p.is_dir() and not p.name.startswith('.')],key=lambda p:p.name.lower()) if MUSIC.exists() else []:
   mid=slug(md.name); old_path=CARDS/f'{mid}.json'; old_cards={}
   if old_path.exists():
    try: old_cards={c['id']:c for c in json.loads(old_path.read_text(encoding='utf-8')).get('cards',[])}
    except Exception: old_cards={}
-  lrcs={stem(p.name):p for p in md.iterdir() if p.is_file() and p.suffix.lower()=='.lrc'}
-  aud={stem(p.name):p for p in md.iterdir() if p.is_file() and p.suffix.lower() in AUDIO_EXTS}
-  songs=[]; cards=[]; unresolved=set()
+  lrcs={stem(p.name):p for p in md.iterdir() if p.is_file() and p.suffix.lower()=='.lrc'}; aud={stem(p.name):p for p in md.iterdir() if p.is_file() and p.suffix.lower() in AUDIO_EXTS}; songs=[]; cards=[]; unresolved=set()
   for k,lp in sorted(lrcs.items()):
-   ap=aud.get(k); sid=f'{mid}::{slug(title(lp.name))}'
-   songs.append({'id':sid,'title':title(lp.name),'musical':md.name,'lrc':lp.as_posix(),'audio':ap.as_posix() if ap else ''})
+   ap=aud.get(k); sid=f'{mid}::{slug(title(lp.name))}'; songs.append({'id':sid,'title':title(lp.name),'musical':md.name,'lrc':lp.as_posix(),'audio':ap.as_posix() if ap else ''})
    lines=lrc(lp); first={}
    for line in lines:
     for raw in tokens(line['text']):
@@ -110,14 +103,8 @@ def main():
     hit=private.get(key) or private.get(w.lower())
     translation=(old.get('translation') or '').strip() or (hit.get('en','') if hit else '')
     if not translation: unresolved.add(key)
-    old_level=old.get('level')
-    level=old_level if old_level in LEVELS else level_for(w,hit)
-    cards.append({
-      'id':cid,'word':w,'translation':translation,'lineTranslation':old.get('lineTranslation',''),'level':level,
-      'mastered':False,'excluded':False,'musical':md.name,'show':md.name,'song':title(lp.name),
-      'line':line['text'],'startTime':line['time'],'endTime':line['endTime'],'audioUrl':ap.as_posix() if ap else '','source':'builtin'
-    })
-  # Fill only genuinely missing word translations from Beolingus. This is done after the private site's dictionary so it matches the uploader first.
+    old_level=old.get('level'); level=old_level if old_level in LEVELS else level_for(w,hit)
+    cards.append({'id':cid,'word':w,'translation':translation,'lineTranslation':old.get('lineTranslation',''),'level':level,'mastered':False,'excluded':False,'musical':md.name,'show':md.name,'song':title(lp.name),'line':line['text'],'startTime':line['time'],'endTime':line['endTime'],'audioUrl':ap.as_posix() if ap else '','source':'builtin'})
   extra=load_beolingus(unresolved) if unresolved else {}
   for c in cards:
    if not c['translation']:
@@ -126,14 +113,8 @@ def main():
     if not c['level'] or c['level'] not in LEVELS: c['level']=level_for(c['word'])
   counts={x:0 for x in LEVELS}
   for c in cards: counts[c['level'] if c['level'] in counts else 'B1']+=1
-  old_version=''
-  if old_path.exists():
-   try: old_version=json.loads(old_path.read_text(encoding='utf-8')).get('version','')
-   except: pass
-  if cards:
-   old_path.write_text(json.dumps({'version':datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S'),'musical':md.name,'cards':cards},ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+  old_path.write_text(json.dumps({'version':datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S'),'musical':md.name,'cards':cards},ensure_ascii=False,separators=(',',':')),encoding='utf-8')
   musicals.append({'id':mid,'name':md.name,'description':'','cardsUrl':f'data/musicals/{mid}.json','cardCount':len(cards),'levelCounts':counts,'songs':songs})
- data={'version':datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S'),'updatedAt':datetime.now(timezone.utc).isoformat(timespec='seconds'),'musicals':musicals}
- OUT.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
- print(f'Built {len(musicals)} musicals and {sum(len((CARDS/f"{m["id"]}.json").read_text(encoding="utf-8")) for m in musicals if False)} cards.')
+ OUT.write_text(json.dumps({'version':datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S'),'updatedAt':datetime.now(timezone.utc).isoformat(timespec='seconds'),'musicals':musicals},ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+ print(f'Built {len(musicals)} musicals with per-musical card files.')
 if __name__=='__main__': main()
