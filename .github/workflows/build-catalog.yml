@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Patch public interface
         run: python tools/patch_index.py
       - name: Build per-musical catalog
@@ -33,4 +35,6 @@ jobs:
           git add index.html data/catalog.json data/musicals/
           git diff --cached --quiet && exit 0
           git commit -m 'Enrich built-in musical translations and CEFR levels'
-          git push
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
