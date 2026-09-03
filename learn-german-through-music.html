@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn German Through Music — Lyric Vocab Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --curtain:#4a1420; --curtain-deep:#330d16; --gold:#c8a24d; --gold-bright:#e0bc6c;
+    --paper:#f3ead9; --paper-dim:#e5d9c0; --ink:#241a15; --ink-soft:#5c4a3d;
+    --line:#d8c9a8; --good:#2f6b3f; --bad:#a3253c;
+    --stage-shadow: 0 30px 60px -20px rgba(20,5,10,0.5);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(ellipse at top, #5a1a28 0%, var(--curtain) 45%, var(--curtain-deep) 100%);
+    min-height:100vh; font-family:'Inter',sans-serif; color:var(--ink); padding:36px 20px 60px;
+  }
+  .stage-lights{ position:fixed; top:0; left:0; right:0; height:220px; pointer-events:none;
+    background:radial-gradient(circle at 20% -10%, rgba(224,188,108,0.16), transparent 45%),
+                radial-gradient(circle at 80% -10%, rgba(224,188,108,0.16), transparent 45%); z-index:0; }
+  .wrap{max-width:960px; margin:0 auto; position:relative; z-index:1;}
+  header{ text-align:center; margin-bottom:30px; }
+  .marquee{ display:inline-block; padding:6px 22px; border:1px solid var(--gold); border-radius:2px;
+    color:var(--gold-bright); letter-spacing:.14em; font-size:11px; font-weight:600; margin-bottom:14px; }
+  h1{ font-family:'Fraunces',serif; font-weight:700; font-style:italic; color:var(--paper); font-size:42px; margin:0 0 6px; }
+  header p{ color:#d9b98f; margin:0; font-size:14px; }
+  nav.tabs{ display:flex; justify-content:center; gap:6px; margin:26px 0; flex-wrap:wrap; }
+  nav.tabs button{ background:transparent; border:1px solid rgba(224,188,108,0.35); color:#e8d9bd;
+    padding:9px 18px; font-size:13.5px; font-weight:500; cursor:pointer; border-radius:999px; transition:.15s; font-family:inherit; }
+  nav.tabs button.active{ background:var(--gold); border-color:var(--gold); color:#2b1707; font-weight:600; }
+  nav.tabs button:hover:not(.active){ border-color:var(--gold-bright); color:var(--gold-bright); }
+  .panel{ background:var(--paper); border-radius:6px; box-shadow:var(--stage-shadow); padding:32px 36px; position:relative; overflow:hidden; }
+  .panel::before{ content:''; position:absolute; top:0; left:0; right:0; height:6px;
+    background:repeating-linear-gradient(90deg, var(--gold) 0 18px, transparent 18px 26px); opacity:.6; }
+  h2.section-title{ font-family:'Fraunces',serif; font-size:20px; margin:0 0 4px; }
+  .subtle{ color:var(--ink-soft); font-size:13px; margin:0 0 16px; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-soft); margin-bottom:6px; }
+  .field input[type=text], .field textarea{ width:100%; border:1px solid #cbb98e; background:#fffdf8; border-radius:4px;
+    padding:9px 11px; font-family:inherit; font-size:14px; color:var(--ink); }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .hint{ font-size:12px; color:var(--ink-soft); margin-top:5px; line-height:1.5; }
+  .btn{ background:var(--curtain); color:var(--paper); border:none; border-radius:4px; padding:10px 18px;
+    font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; transition:.15s; }
+  .btn:hover{ background:#5c1a2b; } .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.ghost{ background:transparent; border:1px solid var(--curtain); color:var(--curtain); }
+  .btn.ghost:hover{ background:rgba(74,20,32,0.06); }
+  .btn.small{ padding:6px 12px; font-size:12px; }
+  .divider{ border-top:1px solid var(--line); margin:22px 0; }
+  .chiprow{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .chip{ border-radius:999px; padding:6px 13px; font-size:12px; cursor:pointer; border:1px solid #cbb98e; background:#fffdf8; color:var(--ink); }
+  .chip.active{ background:var(--curtain); border-color:var(--curtain); color:var(--paper); }
+  .level-check{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; margin-right:14px; margin-bottom:6px; color:var(--ink-soft); }
+  select, input[type=search]{ border:1px solid #cbb98e; background:#fffdf8; border-radius:4px; padding:8px 11px; font-family:inherit; font-size:13px; color:var(--ink); }
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap; }
+  .msg{ font-size:12.5px; color:var(--good); margin-left:2px; }
+
+  /* table */
+  table.master{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.master th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);
+    border-bottom:1px solid var(--line); padding:8px 6px; user-select:none; white-space:nowrap; }
+  table.master th.sortable:hover{ color:var(--ink); }
+  table.master th.sorted{ color:var(--ink); }
+  table.master th .sort-ind{ font-size:10px; opacity:.7; }
+  table.master td{ padding:9px 6px; border-bottom:1px solid #ecdfc4; vertical-align:top; }
+  .lvl-badge{ font-size:10.5px; font-weight:700; background:#f0dfae; color:#8a6d2f; border-radius:999px; padding:2px 8px; white-space:nowrap; }
+  select.lvl-edit{ font-size:11.5px; padding:4px 6px; border-radius:999px; background:#f0dfae; color:#8a6d2f; border:1px solid #d9c191; font-weight:700; }
+  .word-de{ font-family:'Fraunces',serif; font-weight:600; font-size:15px; }
+  input.word-edit{ font-family:'Fraunces',serif; font-weight:600; font-size:14px; width:120px; border:1px solid #cbb98e; border-radius:4px; padding:5px 7px; background:#fffdf6; }
+  input.line-edit{ font-style:italic; font-size:12.5px; width:100%; min-width:180px; border:1px solid #cbb98e; border-radius:4px; padding:5px 7px; background:#fffdf6; color:#7a6248; }
+  .line-de{ font-style:italic; color:#7a6248; }
+  .line-en{ font-style:italic; color:#a08862; font-size:12px; }
+  .empty{ text-align:center; color:var(--ink-soft); padding:40px 10px; font-size:14px; }
+
+  /* flashcard */
+  .card-stage{ display:flex; justify-content:center; margin:20px 0; perspective:1400px; }
+  .flipcard{ width:100%; max-width:440px; height:290px; position:relative; cursor:pointer;
+    transform-style:preserve-3d; transition:transform .5s cubic-bezier(.2,.8,.2,1); }
+  .flipcard.flipped{ transform:rotateY(180deg); }
+  .face{ position:absolute; inset:0; backface-visibility:hidden; border-radius:8px; border:1px solid var(--gold);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; }
+  .face.front{ background:linear-gradient(160deg,#fffdf8,#f3e8cf); }
+  .face.back{ background:linear-gradient(160deg,var(--curtain),#5a1a28); color:var(--paper); transform:rotateY(180deg); }
+  .level-tag{ font-size:11px; font-weight:700; letter-spacing:.06em; color:#8a6d2f; background:#f0dfae; border-radius:999px; padding:3px 10px; margin-bottom:10px; }
+  .word-title{ font-family:'Fraunces',serif; font-weight:700; font-size:32px; }
+  .show-tag{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px; }
+  .back .show-tag{ color:#d9b98f; }
+  .back-en{ font-size:19px; font-weight:600; margin:12px 0 10px; font-family:'Fraunces',serif; font-style:italic; }
+  .back-line{ font-size:14px; line-height:1.5; color:#f0e2c9; max-width:330px; }
+  .back-line-en{ font-size:12.5px; color:#cbb488; margin-top:6px; max-width:330px; }
+  .back-song{ margin-top:12px; font-size:11.5px; color:#cbb488; }
+  .flip-hint{ text-align:center; font-size:12px; color:#8a7256; margin-bottom:18px; }
+  .review-nav{ display:flex; justify-content:space-between; align-items:center; max-width:440px; margin:0 auto; }
+  .play-btn{ margin-top:12px; padding:6px 14px; font-size:12px; border-radius:4px; cursor:pointer; }
+
+  /* quiz */
+  .quiz-grid{ display:grid; grid-template-columns:1fr 1fr; gap:24px; max-width:560px; margin:0 auto; }
+  .quiz-col button{ display:block; width:100%; text-align:left; margin-bottom:8px; padding:10px 12px; border-radius:5px;
+    border:1px solid #cbb98e; background:#fffdf8; cursor:pointer; font-size:13.5px; font-family:inherit; color:var(--ink); }
+  .quiz-col button.selected{ border-color:var(--curtain); background:#f3e2c4; }
+  .quiz-col button.correct{ background:#dcefe0; border-color:var(--good); color:var(--good); pointer-events:none; }
+  .quiz-col button.wrong{ background:#f6dbdf; border-color:var(--bad); animation:shake .3s; }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+  .quiz-score{ text-align:center; font-size:14px; margin-top:16px; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="stage-lights"></div>
+<div class="wrap">
+  <header>
+    <div class="marquee">GERMAN VOCAB THROUGH MUSIC</div>
+    <h1>Learn German Through Music</h1>
+    <p>Turn any songs, artists, or musicals into a personal German vocab deck.</p>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="import" class="active">Import</button>
+    <button data-tab="table">All Words</button>
+    <button data-tab="study">Study</button>
+  </nav>
+
+  <!-- ============ IMPORT TAB ============ -->
+  <section class="panel" id="view-import">
+    <h2 class="section-title">Import lyrics &amp; audio</h2>
+
+    <div class="row2">
+      <div class="field">
+        <label>LRC files or folder</label>
+        <input type="file" id="lrcFileInput" accept=".lrc,.txt" multiple>
+        <div class="hint">Pick individual .lrc files…</div>
+        <input type="file" id="lrcFolderInput" webkitdirectory directory multiple style="margin-top:6px;">
+        <div class="hint">…or select a whole folder (one musical = one folder works well).</div>
+      </div>
+      <div class="field">
+        <label>Matching MP3 files or folder</label>
+        <input type="file" id="mp3FileInput" accept="audio/*" multiple>
+        <div class="hint">Filenames should roughly match the LRC files (e.g. "05 Kitsch.mp3" ↔ "05 Kitsch.lrc").</div>
+        <input type="file" id="mp3FolderInput" webkitdirectory directory multiple style="margin-top:6px;">
+        <div class="hint" id="mp3Status" style="color:var(--good);"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Collection name (song, artist, playlist, or musical — tags every card generated from this import)</label>
+      <input type="text" id="showInput" placeholder="e.g. Elisabeth, or an artist/playlist name">
+    </div>
+
+    <div id="lrcLinesWrap" style="display:none;">
+      <div class="chiprow">
+        <label class="level-check"><input type="checkbox" id="skipCommonWords" checked> Skip filler (der, und, ich…)</label>
+        <label class="level-check"><input type="checkbox" id="skipExisting" checked> Skip words already in deck</label>
+      </div>
+      <button class="btn" id="autoGenBtn" type="button">Generate flashcards from lyrics</button>
+      <span id="autoGenMsg" class="msg"></span>
+
+      <div class="divider"></div>
+      <details>
+        <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft);">…or pick a single line manually</summary>
+        <div class="lyric-picker" id="lrcLinesList" style="max-height:200px; overflow-y:auto; font-size:14px; line-height:1.9; margin-top:10px; border:1px dashed #b8a578; border-radius:4px; padding:12px;"></div>
+      </details>
+    </div>
+
+    <div class="divider"></div>
+    <details>
+      <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft); margin-bottom:10px;">Add a single word by hand</summary>
+      <div style="margin-top:14px;">
+        <div class="field">
+          <label>Line to break into words (optional)</label>
+          <textarea id="lyricInput" placeholder="paste a line you already have…"></textarea>
+        </div>
+        <button class="btn ghost small" id="tokenizeBtn" type="button">Split line into words</button>
+        <div id="pickerWrap" style="display:none; margin-top:10px;">
+          <div class="lyric-picker" id="lyricPicker" style="font-family:'Fraunces',serif; font-size:17px; line-height:2; border:1px dashed #b8a578; border-radius:4px; padding:12px;"></div>
+        </div>
+        <div class="row2" style="margin-top:14px;">
+          <div class="field"><label>Target word</label><input type="text" id="wordInput" placeholder="fragen"></div>
+          <div class="field"><label>Translation</label><input type="text" id="translationInput" placeholder="to ask"></div>
+        </div>
+        <div class="field"><label>Song title</label><input type="text" id="songInput" placeholder="e.g. Kitsch"></div>
+        <div class="field"><label>Note (optional)</label><input type="text" id="noteInput" placeholder="separable verb: fragen nach + dative"></div>
+        <button class="btn" id="saveBtn" type="button">Save card</button>
+        <span id="saveMsg" class="msg"></span>
+      </div>
+    </details>
+
+    <div class="divider"></div>
+    <h2 class="section-title" style="font-size:16px;">Dictionary &amp; backup</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px;">
+      <button class="btn" id="doAllBtn" type="button">Translate &amp; rate all words</button>
+      <button class="btn ghost small" id="exportBtn" type="button">Backup</button>
+      <button class="btn ghost small" id="importBtn" type="button">Restore</button>
+      <input type="file" id="importFileInput" accept=".json" style="display:none;">
+    </div>
+    <div class="hint">Loads the free dictionary if needed, fills translations &amp; CEFR levels, looks up remaining gaps, merges conjugations, and excludes unknowns. Cards are saved in this browser automatically.</div>
+    <div><span id="dictMsg" class="msg"></span></div>
+
+    <div class="divider"></div>
+    <details open>
+      <summary style="cursor:pointer; font-size:14px; font-weight:600; color:var(--ink);">Check &amp; improve (lines + translations)</summary>
+      <p class="subtle" style="margin:8px 0 10px;">Dictionary check is free. Line translation uses a free public API. Optional Gemini key (free from Google) gives stronger AI review of words and full lines.</p>
+      <div class="field">
+        <label>Gemini API key (optional — free at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>)</label>
+        <input type="password" id="geminiKey" placeholder="paste key — stored only in this browser" autocomplete="off">
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">
+        <button class="btn ghost" id="checkWordsBtn" type="button">Check word translations</button>
+        <button class="btn ghost" id="translateLinesBtn" type="button">Translate example lines</button>
+        <button class="btn" id="aiReviewBtn" type="button">AI review (Gemini)</button>
+      </div>
+      <div><span id="aiMsg" class="msg"></span></div>
+      <div id="checkReport" style="display:none; margin-top:10px; max-height:220px; overflow-y:auto; font-size:12.5px; border:1px dashed #b8a578; border-radius:6px; padding:10px; background:#fffdf6;"></div>
+    </details>
+  </section>
+
+  <!-- ============ ALL WORDS TAB ============ -->
+  <section class="panel" id="view-table" style="display:none;">
+    <h2 class="section-title">All words</h2>
+    <div id="showChips" class="chiprow"></div>
+    <div class="toolbar">
+      <input type="search" id="searchInput" placeholder="Search word, translation, or line…" style="flex:1; min-width:200px;">
+      <span id="countLabel" class="subtle" style="margin:0;"></span>
+    </div>
+    <div class="chiprow" id="levelChipsTable"></div>
+    <div style="overflow-x:auto;">
+      <table class="master" id="masterTable">
+        <thead><tr>
+          <th class="sortable" data-sort="word" style="cursor:pointer;">Word <span class="sort-ind"></span></th>
+          <th class="sortable" data-sort="level" style="cursor:pointer;">Level <span class="sort-ind"></span></th>
+          <th class="sortable" data-sort="translation" style="cursor:pointer;">Translation <span class="sort-ind"></span></th>
+          <th class="sortable" data-sort="line" style="cursor:pointer;">Example line <span class="sort-ind"></span></th>
+          <th class="sortable" data-sort="show" style="cursor:pointer;">Show <span class="sort-ind"></span></th>
+          <th class="sortable" data-sort="status" style="cursor:pointer;">Status <span class="sort-ind"></span></th>
+          <th class="sortable" data-sort="excluded" style="cursor:pointer;">Exclude <span class="sort-ind"></span></th>
+          <th></th>
+        </tr></thead>
+        <tbody id="masterBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ STUDY TAB ============ -->
+  <section class="panel" id="view-study" style="display:none;">
+    <div id="studySetup">
+      <h2 class="section-title">Study setup</h2>
+      <p class="subtle">Cards are studied in groups of 10, easiest first. A matching quiz follows each group.</p>
+      <div class="field"><label>Collection</label><select id="studyShowFilter"><option value="">All collections</option></select></div>
+      <div class="field">
+        <label>Levels to include</label>
+        <div class="chiprow" id="levelChipsStudy"></div>
+      </div>
+      <label class="level-check"><input type="checkbox" id="studyIncludeMastered"> Include words I've already mastered</label><br>
+      <div class="field" style="margin-top:12px;">
+        <label>Study order</label>
+        <select id="studyOrder">
+          <option value="level">Easiest first (by level)</option>
+          <option value="alpha">Alphabetical (A→Z)</option>
+          <option value="shuffle" selected>Shuffle (random)</option>
+        </select>
+      </div>
+      <button class="btn" id="startStudyBtn" type="button" style="margin-top:14px;">Start studying</button>
+      <div class="hint" id="studyCountPreview"></div>
+    </div>
+
+    <div id="studySession" style="display:none;">
+      <div class="toolbar">
+        <span id="groupProgress" class="subtle" style="margin:0;"></span>
+        <label class="level-check"><input type="checkbox" id="autoPlayAudio" checked> Auto-play audio</label>
+        <button class="btn ghost small" id="endSessionBtn" type="button">End session</button>
+      </div>
+      <div id="flashPhase">
+        <div class="card-stage">
+          <div class="flipcard" id="flipcard">
+            <div class="face front">
+              <div class="level-tag" id="frontLevel"></div>
+              <div class="word-title" id="frontWord">—</div>
+              <div class="show-tag" id="frontShow"></div>
+              <button class="btn ghost play-btn" id="playBtnFront" type="button" style="display:none;" onclick="event.stopPropagation()">▶ Listen to line</button>
+            </div>
+            <div class="face back">
+              <div class="show-tag" id="backShow"></div>
+              <div class="back-en" id="backTranslation"></div>
+              <div class="back-line" id="backLine"></div>
+              <div class="back-line-en" id="backLineEn"></div>
+              <div class="back-song" id="backSong"></div>
+              <button class="btn ghost play-btn" id="playBtnBack" type="button" style="display:none; border-color:var(--gold); color:var(--gold-bright);" onclick="event.stopPropagation()">▶ Listen to line</button>
+            </div>
+          </div>
+        </div>
+        <div class="flip-hint">Tap the card to flip</div>
+        <div class="review-nav">
+          <button class="btn ghost" id="againBtn">↻ Again</button>
+          <button class="btn ghost" id="editFlashBtn" type="button">✎ Edit</button>
+          <button class="btn" id="knowBtn">Know it ✓</button>
+        </div>
+      </div>
+      <div id="quizPhase" style="display:none;">
+        <h2 class="section-title" style="text-align:center;">Match the words</h2>
+        <p class="subtle" style="text-align:center;">Click a German word, then its English translation.</p>
+        <div class="quiz-grid">
+          <div class="quiz-col" id="quizDe"></div>
+          <div class="quiz-col" id="quizEn"></div>
+        </div>
+        <div class="quiz-score" id="quizScore"></div>
+        <div style="text-align:center; margin-top:16px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <button class="btn ghost" id="skipQuizBtn" type="button">Skip quiz →</button>
+          <button class="btn" id="nextGroupBtn" type="button" style="display:none;">Next group →</button>
+        </div>
+      </div>
+      <div id="sessionDone" style="display:none; text-align:center; padding:30px 0;">
+        <h2 class="section-title">Session complete ✓</h2>
+        <p class="subtle">Nice work. Progress is saved automatically.</p>
+        <button class="btn" id="backToSetupBtn" type="button">Back to setup</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Full card editor modal -->
+<div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(40,24,12,.45); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--paper); border-radius:12px; max-width:520px; width:100%; max-height:90vh; overflow-y:auto; padding:22px 24px; box-shadow:0 12px 40px rgba(0,0,0,.25); border:1px solid var(--line);">
+    <h2 class="section-title" style="font-size:18px; margin-bottom:12px;">Edit card</h2>
+    <input type="hidden" id="editId">
+    <div class="row2">
+      <div class="field"><label>Word</label><input type="text" id="editWord"></div>
+      <div class="field"><label>Translation</label><input type="text" id="editTranslation"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Level</label>
+        <select id="editLevel"></select>
+      </div>
+      <div class="field"><label>Status</label>
+        <select id="editMastered">
+          <option value="0">Learning</option>
+          <option value="1">Mastered</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Example line (German)</label><textarea id="editLine" rows="2"></textarea></div>
+    <div class="field"><label>Example line (English)</label><textarea id="editLineEn" rows="2" placeholder="sentence translation"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Collection / show</label><input type="text" id="editShow"></div>
+      <div class="field"><label>Song</label><input type="text" id="editSong"></div>
+    </div>
+    <div class="field"><label>Note</label><input type="text" id="editNote" placeholder="optional note"></div>
+    <label class="level-check" style="margin:8px 0 14px; display:block;"><input type="checkbox" id="editExcluded"> Exclude from study</label>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn" id="editSaveBtn" type="button">Save changes</button>
+      <button class="btn ghost" id="editCancelBtn" type="button">Cancel</button>
+      <button class="btn ghost" id="editDeleteBtn" type="button" style="margin-left:auto; color:var(--bad);">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'buehnenworter:cards';
+let cards = [];
+let selectedToken = null;
+let currentLineMeta = null;
+let lrcLines = [];
+let audioMap = {};
+
+const LEVELS = ['A1','A2','B1','B2','C1','C2','?'];
+const LEVEL_LABELS = {A1:'A1',A2:'A2',B1:'B1',B2:'B2',C1:'C1',C2:'C2','?':'Unrated'};
+function numToLevel(n){ return {1:'A1',2:'A2',3:'B1',4:'B2',5:'C1',6:'C2'}[n] || '?'; }
+function levelSort(lv){ return LEVELS.indexOf(lv || '?'); }
+
+// Map conjugated / inflected forms → dictionary lemma (for merging flashcards)
+const LEMMA_MAP = {
+  will:'wollen', willst:'wollen', wollt:'wollen', wollte:'wollen', wollten:'wollen', gewollt:'wollen',
+  möchte:'mögen', möchten:'mögen', möchtest:'mögen', möchtet:'mögen', mag:'mögen', magst:'mögen', mochte:'mögen', gemocht:'mögen',
+  kann:'können', kannst:'können', könnt:'können', konnte:'können', konnten:'können', gekonnt:'können',
+  muss:'müssen', muß:'müssen', musst:'müssen', müsst:'müssen', musste:'müssen', mussten:'müssen', gemusst:'müssen',
+  soll:'sollen', sollst:'sollen', sollt:'sollen', sollte:'sollen', sollten:'sollen', gesollt:'sollen',
+  darf:'dürfen', darfst:'dürfen', dürft:'dürfen', durfte:'dürfen', durften:'dürfen', gedurft:'dürfen',
+  bin:'sein', bist:'sein', ist:'sein', sind:'sein', seid:'sein', war:'sein', waren:'sein', gewesen:'sein',
+  habe:'haben', hast:'haben', hat:'haben', habt:'haben', hatte:'haben', hatten:'haben', gehabt:'haben',
+  werde:'werden', wirst:'werden', wird:'werden', werdet:'werden', wurde:'werden', wurden:'werden', geworden:'werden',
+  finde:'finden', findest:'finden', findet:'finden', fand:'finden', fanden:'finden', gefunden:'finden',
+  flieg:'fliegen', fliege:'fliegen', fliegst:'fliegen', fliegt:'fliegen', flog:'fliegen', geflogen:'fliegen',
+  flieh:'fliehen', fliehe:'fliehen', fliehst:'fliehen', flieht:'fliehen', floh:'fliehen', geflohen:'fliehen',
+  geh:'gehen', gehe:'gehen', gehst:'gehen', geht:'gehen', ging:'gehen', gingen:'gehen', gegangen:'gehen',
+  komme:'kommen', kommst:'kommen', kommt:'kommen', kam:'kommen', kamen:'kommen', gekommen:'kommen',
+  sehe:'sehen', siehst:'sehen', sieht:'sehen', sah:'sehen', sahen:'sehen', gesehen:'sehen',
+  gebe:'geben', gibst:'geben', gibt:'geben', gab:'geben', gaben:'geben', gegeben:'geben',
+  nehme:'nehmen', nimmst:'nehmen', nimmt:'nehmen', nahm:'nehmen', nahmen:'nehmen', genommen:'nehmen',
+  mache:'machen', machst:'machen', macht:'machen', machte:'machen', gemacht:'machen',
+  sage:'sagen', sagst:'sagen', sagt:'sagen', sagte:'sagen', gesagt:'sagen',
+  liebe:'lieben', liebst:'lieben', liebt:'lieben', liebte:'lieben', geliebt:'lieben',
+  deine:'dein', deinen:'dein', deinem:'dein', deiner:'dein', deines:'dein',
+  meine:'mein', meinen:'mein', meinem:'mein', meiner:'mein', meines:'mein',
+  seine:'sein', seinen:'sein', seinem:'sein', seiner:'sein', seines:'sein',
+  ihre:'ihr', ihren:'ihr', ihrem:'ihr', ihrer:'ihr', ihres:'ihr',
+  unsere:'unser', unseren:'unser', unserem:'unser', unserer:'unser', unseres:'unser',
+  diese:'dieser', diesen:'dieser', diesem:'dieser', dieses:'dieser',
+  abgrunds:'abgrund', abgrundes:'abgrund', abgründe:'abgrund'
+};
+function toLemma(word){
+  // Only map known conjugations (will→wollen). NEVER stem-shorten nouns
+  // (that wrongly turned Nacht→nach, etc.)
+  const k = normalizeWord(word).toLowerCase();
+  if(!k) return word;
+  if(LEMMA_MAP[k]) return LEMMA_MAP[k];
+  return k;
+}
+
+// Assign CEFR when dictionary has no level (so every card gets rated)
+function heuristicLevel(word, translation){
+  const w = normalizeWord(word).toLowerCase();
+  if(!w) return 'B1';
+  if(GERMAN_DICT[w] && GERMAN_DICT[w].level != null) return numToLevel(GERMAN_DICT[w].level);
+  if(COMMON_DE.has(w) || w.length <= 3) return 'A1';
+  if(w.length <= 5) return 'A2';
+  if(w.length <= 8) return 'B1';
+  if(w.length <= 11) return 'B2';
+  if(w.length <= 14) return 'C1';
+  return 'C2';
+}
+
+// Curated general-purpose German vocabulary (not sourced from any specific copyrighted text).
+const GERMAN_DICT = {
+  "ich":{en:"I",level:1}, "du":{en:"you",level:1}, "er":{en:"he",level:1}, "sie":{en:"she / they",level:1},
+  "wir":{en:"we",level:1}, "ihr":{en:"you (pl.)",level:1}, "sein":{en:"to be",level:1}, "haben":{en:"to have",level:1},
+  "gehen":{en:"to go; walk",level:1}, "kommen":{en:"to come",level:1}, "sagen":{en:"to say",level:1}, "sehen":{en:"to see",level:1},
+  "wissen":{en:"to know",level:2}, "denken":{en:"to think",level:2}, "fragen":{en:"to ask",level:1}, "antworten":{en:"to answer",level:2},
+  "lieben":{en:"to love",level:1}, "hassen":{en:"to hate",level:2}, "sterben":{en:"to die",level:2},
+  "geben":{en:"to give",level:1}, "nehmen":{en:"to take",level:1}, "machen":{en:"to make / do",level:1}, "tun":{en:"to do",level:2},
+  "wollen":{en:"to want",level:1}, "können":{en:"to be able to",level:1}, "müssen":{en:"to have to",level:1}, "sollen":{en:"to be supposed to",level:2},
+  "dürfen":{en:"to be allowed to",level:2}, "mögen":{en:"to like",level:1}, "brauchen":{en:"to need",level:2}, "finden":{en:"to find",level:1},
+  // common conjugations (lyrics use these constantly; Beolingus lists many only inside tables)
+  "will":{en:"want / will",level:1}, "willst":{en:"want (you)",level:1}, "wollt":{en:"want (you pl.)",level:1}, "wollte":{en:"wanted",level:1}, "wollten":{en:"wanted",level:1},
+  "möchte":{en:"would like",level:1}, "möchten":{en:"would like",level:1}, "möchtest":{en:"would like (you)",level:1}, "möchtet":{en:"would like (you pl.)",level:1},
+  "mag":{en:"like / may",level:1}, "magst":{en:"like (you)",level:1}, "mochte":{en:"liked",level:2},
+  "kann":{en:"can",level:1}, "kannst":{en:"can (you)",level:1}, "könnt":{en:"can (you pl.)",level:1}, "konnte":{en:"could",level:1}, "konnten":{en:"could",level:1},
+  "muss":{en:"must / have to",level:1}, "muß":{en:"must / have to",level:1}, "musst":{en:"must (you)",level:1}, "müsst":{en:"must (you pl.)",level:1}, "musste":{en:"had to",level:1},
+  "soll":{en:"should / ought to",level:1}, "sollst":{en:"should (you)",level:1}, "sollt":{en:"should (you pl.)",level:1}, "sollte":{en:"should",level:1}, "sollten":{en:"should",level:1},
+  "darf":{en:"may / allowed to",level:1}, "darfst":{en:"may (you)",level:1}, "dürft":{en:"may (you pl.)",level:1}, "durfte":{en:"was allowed to",level:2},
+  "bin":{en:"am",level:1}, "bist":{en:"are (you)",level:1}, "ist":{en:"is",level:1}, "sind":{en:"are",level:1}, "seid":{en:"are (you pl.)",level:1}, "war":{en:"was",level:1}, "waren":{en:"were",level:1},
+  "habe":{en:"have",level:1}, "hast":{en:"have (you)",level:1}, "hat":{en:"has",level:1}, "habt":{en:"have (you pl.)",level:1}, "hatte":{en:"had",level:1}, "hatten":{en:"had",level:1},
+  "werde":{en:"will / become",level:1}, "wirst":{en:"will (you)",level:1}, "wird":{en:"will / becomes",level:1}, "werdet":{en:"will (you pl.)",level:1}, "wurde":{en:"became",level:1},
+  "finde":{en:"find",level:1}, "findest":{en:"find (you)",level:1}, "findet":{en:"finds",level:1}, "fand":{en:"found",level:1}, "gefunden":{en:"found",level:1},
+  "flieg":{en:"fly",level:1}, "fliege":{en:"fly",level:1}, "fliegst":{en:"fly (you)",level:1}, "fliegt":{en:"flies",level:1}, "flog":{en:"flew",level:2}, "geflogen":{en:"flown",level:2},
+  "flieh":{en:"flee",level:2}, "fliehe":{en:"flee",level:2}, "fliehst":{en:"flee (you)",level:2}, "flieht":{en:"flees",level:2}, "floh":{en:"fled",level:2}, "geflohen":{en:"fled",level:2},
+  "dein":{en:"your",level:1}, "deine":{en:"your",level:1}, "deinen":{en:"your",level:1}, "deinem":{en:"your",level:1}, "deiner":{en:"your",level:1},
+  "mein":{en:"my",level:1}, "meine":{en:"my",level:1}, "meinen":{en:"my",level:1}, "meinem":{en:"my",level:1}, "meiner":{en:"my",level:1},
+  "seine":{en:"his",level:1}, "seinen":{en:"his",level:1}, "seinem":{en:"his",level:1}, "seiner":{en:"his",level:1},
+  "ihre":{en:"her / their",level:1}, "ihren":{en:"her / their",level:1}, "ihrem":{en:"her / their",level:1}, "ihrer":{en:"her / their",level:1},
+  "unsere":{en:"our",level:1}, "unseren":{en:"our",level:1}, "unserem":{en:"our",level:1}, "unserer":{en:"our",level:1},
+  "diese":{en:"this / these",level:1}, "dieser":{en:"this / these",level:1}, "dieses":{en:"this / these",level:1}, "diesen":{en:"this / these",level:1}, "diesem":{en:"this / these",level:1},
+  "dorthin":{en:"(to) there",level:2}, "hierher":{en:"(to) here",level:1},
+  "suchen":{en:"to search",level:2}, "bleiben":{en:"to stay",level:2}, "werden":{en:"to become",level:2}, "lassen":{en:"to let / leave",level:2},
+  "glauben":{en:"to believe",level:2}, "fühlen":{en:"to feel",level:2}, "hören":{en:"to hear",level:1}, "sprechen":{en:"to speak",level:2},
+  "reden":{en:"to talk",level:2}, "schweigen":{en:"to be silent",level:3}, "weinen":{en:"to cry",level:2}, "lachen":{en:"to laugh",level:1},
+  "träumen":{en:"to dream",level:2}, "erinnern":{en:"to remember",level:3}, "vergessen":{en:"to forget",level:2}, "verstehen":{en:"to understand",level:2},
+  "kennen":{en:"to know (someone)",level:1}, "warten":{en:"to wait",level:2}, "hoffen":{en:"to hope",level:2}, "fürchten":{en:"to fear",level:3},
+  "kämpfen":{en:"to fight",level:3}, "verlieren":{en:"to lose",level:2}, "gewinnen":{en:"to win",level:2}, "spielen":{en:"to play",level:1},
+  "singen":{en:"to sing",level:1}, "tanzen":{en:"to dance",level:1}, "leiden":{en:"to suffer",level:3}, "brennen":{en:"to burn",level:3},
+  "fallen":{en:"to fall",level:2}, "fliegen":{en:"to fly",level:2}, "laufen":{en:"to run / walk",level:1}, "stehen":{en:"to stand",level:1},
+  "sitzen":{en:"to sit",level:1}, "liegen":{en:"to lie (position)",level:1}, "öffnen":{en:"to open",level:2}, "schließen":{en:"to close",level:2},
+  "beginnen":{en:"to begin",level:2}, "enden":{en:"to end",level:2}, "zeigen":{en:"to show",level:2}, "erzählen":{en:"to tell (a story)",level:2},
+  "herz":{en:"heart",level:1}, "seele":{en:"soul",level:2}, "leben":{en:"life",level:1}, "tod":{en:"death",level:2},
+  "liebe":{en:"love",level:1}, "hass":{en:"hate",level:2}, "angst":{en:"fear",level:2}, "freiheit":{en:"freedom",level:2},
+  "traum":{en:"dream",level:2}, "welt":{en:"world",level:1}, "zeit":{en:"time",level:1}, "nacht":{en:"night",level:1},
+  "tag":{en:"day",level:1}, "licht":{en:"light",level:1}, "dunkel":{en:"dark",level:2}, "schatten":{en:"shadow",level:2},
+  "schmerz":{en:"pain",level:2}, "glück":{en:"happiness / luck",level:2}, "einsamkeit":{en:"loneliness",level:3}, "sehnsucht":{en:"longing",level:3},
+  "macht":{en:"power",level:2}, "krone":{en:"crown",level:2}, "kaiser":{en:"emperor",level:2}, "kaiserin":{en:"empress",level:2},
+  "reich":{en:"empire / rich",level:2}, "volk":{en:"people / nation",level:2}, "krieg":{en:"war",level:2}, "frieden":{en:"peace",level:2},
+  "gott":{en:"god",level:2}, "himmel":{en:"heaven / sky",level:1}, "erde":{en:"earth",level:1}, "stern":{en:"star",level:1},
+  "wind":{en:"wind",level:1}, "wasser":{en:"water",level:1}, "feuer":{en:"fire",level:1}, "blut":{en:"blood",level:2},
+  "hand":{en:"hand",level:1}, "auge":{en:"eye",level:1}, "augen":{en:"eyes",level:1}, "hände":{en:"hands",level:1},
+  "gesicht":{en:"face",level:1}, "stimme":{en:"voice",level:2}, "wort":{en:"word",level:1}, "worte":{en:"words",level:1},
+  "frage":{en:"question",level:1}, "antwort":{en:"answer",level:2}, "wahrheit":{en:"truth",level:2}, "lüge":{en:"lie",level:2},
+  "spiegel":{en:"mirror",level:2}, "maske":{en:"mask",level:2}, "tür":{en:"door",level:1}, "weg":{en:"way / path",level:1},
+  "haus":{en:"house",level:1}, "mutter":{en:"mother",level:1}, "vater":{en:"father",level:1}, "kind":{en:"child",level:1},
+  "mann":{en:"man",level:1}, "frau":{en:"woman",level:1}, "freund":{en:"friend",level:1}, "feind":{en:"enemy",level:2},
+  "gut":{en:"good",level:1}, "böse":{en:"evil",level:2}, "schön":{en:"beautiful",level:1}, "frei":{en:"free",level:1},
+  "stark":{en:"strong",level:1}, "schwach":{en:"weak",level:2}, "groß":{en:"big",level:1}, "klein":{en:"small",level:1},
+  "neu":{en:"new",level:1}, "alt":{en:"old",level:1}, "jung":{en:"young",level:1}, "allein":{en:"alone",level:2},
+  "immer":{en:"always",level:1}, "nie":{en:"never",level:1}, "heute":{en:"today",level:1}, "morgen":{en:"tomorrow",level:1},
+  "gestern":{en:"yesterday",level:1}, "endlich":{en:"finally",level:2}, "vielleicht":{en:"maybe",level:2}, "wieder":{en:"again",level:1},
+  "warum":{en:"why",level:1}, "wohin":{en:"where to",level:2}, "woher":{en:"where from",level:2},
+
+  // --- expanded common vocabulary (general-purpose, frequency-based, not from any specific text) ---
+  "und":{en:"and",level:1}, "oder":{en:"or",level:1}, "aber":{en:"but",level:1}, "denn":{en:"because/for",level:2},
+  "weil":{en:"because",level:1}, "wenn":{en:"if/when",level:1}, "dass":{en:"that",level:1}, "obwohl":{en:"although",level:3},
+  "damit":{en:"so that",level:3}, "während":{en:"while/during",level:3}, "bevor":{en:"before",level:2}, "nachdem":{en:"after",level:3},
+  "sobald":{en:"as soon as",level:3}, "trotzdem":{en:"nevertheless",level:3}, "deshalb":{en:"therefore",level:2}, "also":{en:"so/thus",level:2},
+  "mensch":{en:"person/human",level:1}, "leute":{en:"people",level:1}, "person":{en:"person",level:1}, "kinder":{en:"children",level:1},
+  "junge":{en:"boy",level:1}, "mädchen":{en:"girl",level:1}, "bruder":{en:"brother",level:1}, "schwester":{en:"sister",level:1},
+  "eltern":{en:"parents",level:1}, "familie":{en:"family",level:1}, "sohn":{en:"son",level:1}, "tochter":{en:"daughter",level:1},
+  "könig":{en:"king",level:2}, "königin":{en:"queen",level:2}, "prinz":{en:"prince",level:2}, "prinzessin":{en:"princess",level:2},
+  "held":{en:"hero",level:2}, "engel":{en:"angel",level:2}, "teufel":{en:"devil",level:2}, "dämon":{en:"demon",level:3},
+  "geist":{en:"spirit/ghost",level:2}, "körper":{en:"body",level:2}, "kopf":{en:"head",level:1}, "mund":{en:"mouth",level:1},
+  "lippen":{en:"lips",level:2}, "haar":{en:"hair",level:1}, "arm":{en:"arm",level:1}, "bein":{en:"leg",level:1},
+  "fuß":{en:"foot",level:1}, "finger":{en:"finger",level:1}, "haut":{en:"skin",level:2}, "knochen":{en:"bone",level:2},
+  "brust":{en:"chest",level:2}, "rücken":{en:"back",level:2}, "schulter":{en:"shoulder",level:2},
+  "leidenschaft":{en:"passion",level:3}, "verzweiflung":{en:"despair",level:3}, "hoffnung":{en:"hope",level:2}, "verrat":{en:"betrayal",level:3},
+  "rache":{en:"revenge",level:3}, "schuld":{en:"guilt/fault",level:2}, "gnade":{en:"mercy",level:3}, "gerechtigkeit":{en:"justice",level:3},
+  "stolz":{en:"pride",level:2}, "scham":{en:"shame",level:3}, "mut":{en:"courage",level:2}, "trauer":{en:"grief/mourning",level:3},
+  "eifersucht":{en:"jealousy",level:4}, "wut":{en:"rage/anger",level:2}, "zorn":{en:"wrath",level:3}, "sünde":{en:"sin",level:3},
+  "fluch":{en:"curse",level:3}, "segen":{en:"blessing",level:3}, "schicksal":{en:"fate/destiny",level:3}, "zukunft":{en:"future",level:2},
+  "vergangenheit":{en:"past",level:2}, "gegenwart":{en:"present",level:3}, "ewigkeit":{en:"eternity",level:3}, "moment":{en:"moment",level:1},
+  "augenblick":{en:"instant",level:3}, "stunde":{en:"hour",level:1}, "minute":{en:"minute",level:1}, "sekunde":{en:"second",level:2},
+  "jahr":{en:"year",level:1}, "leben":{en:"life",level:1}, "sterben":{en:"to die",level:2}, "geburt":{en:"birth",level:2},
+  "grab":{en:"grave",level:2}, "friedhof":{en:"cemetery",level:3}, "seele":{en:"soul",level:2}, "körper":{en:"body",level:2},
+  "wahnsinn":{en:"madness",level:4}, "verrückt":{en:"crazy",level:2}, "einsam":{en:"lonely",level:2}, "verloren":{en:"lost",level:2},
+  "gefangen":{en:"trapped/captured",level:3}, "frei":{en:"free",level:1}, "gefangenschaft":{en:"captivity",level:4}, "kette":{en:"chain",level:2},
+  "ketten":{en:"chains",level:2}, "fessel":{en:"shackle",level:4}, "flucht":{en:"escape",level:3}, "fliehen":{en:"to flee",level:3},
+  "kämpfen":{en:"to fight",level:2}, "schwert":{en:"sword",level:2}, "blut":{en:"blood",level:2}, "wunde":{en:"wound",level:2},
+  "narbe":{en:"scar",level:3}, "schmerzen":{en:"pains",level:2}, "leiden":{en:"to suffer",level:3}, "qual":{en:"agony",level:4},
+  "sturm":{en:"storm",level:2}, "gewitter":{en:"thunderstorm",level:2}, "regen":{en:"rain",level:1}, "schnee":{en:"snow",level:1},
+  "eis":{en:"ice",level:1}, "kälte":{en:"cold",level:2}, "wärme":{en:"warmth",level:2}, "sonne":{en:"sun",level:1},
+  "mond":{en:"moon",level:1}, "sterne":{en:"stars",level:1}, "meer":{en:"sea",level:1}, "fluss":{en:"river",level:1},
+  "berg":{en:"mountain",level:1}, "wald":{en:"forest",level:1}, "garten":{en:"garden",level:1}, "blume":{en:"flower",level:1},
+  "blumen":{en:"flowers",level:1}, "rose":{en:"rose",level:1}, "baum":{en:"tree",level:1}, "wurzel":{en:"root",level:2},
+  "asche":{en:"ash",level:3}, "rauch":{en:"smoke",level:2}, "flamme":{en:"flame",level:2}, "funke":{en:"spark",level:3},
+  "musik":{en:"music",level:1}, "lied":{en:"song",level:1}, "tanz":{en:"dance",level:1}, "stimme":{en:"voice",level:2},
+  "klang":{en:"sound",level:2}, "melodie":{en:"melody",level:2}, "spiel":{en:"game/play",level:1}, "bühne":{en:"stage",level:2},
+  "vorhang":{en:"curtain",level:3}, "publikum":{en:"audience",level:3}, "applaus":{en:"applause",level:3},
+  "traurig":{en:"sad",level:1}, "glücklich":{en:"happy",level:1}, "fröhlich":{en:"cheerful",level:2}, "wütend":{en:"angry",level:2},
+  "ängstlich":{en:"anxious/afraid",level:2}, "mutig":{en:"brave",level:2}, "ruhig":{en:"calm",level:1}, "still":{en:"quiet",level:1},
+  "laut":{en:"loud",level:1}, "leise":{en:"soft/quiet",level:1}, "schwer":{en:"heavy/difficult",level:1}, "leicht":{en:"light/easy",level:1},
+  "hoch":{en:"high",level:1}, "tief":{en:"deep",level:1}, "nah":{en:"near",level:1}, "fern":{en:"far",level:2},
+  "weit":{en:"far/wide",level:1}, "nahe":{en:"close",level:1}, "wahr":{en:"true",level:1}, "falsch":{en:"false/wrong",level:1},
+  "echt":{en:"real/genuine",level:2}, "richtig":{en:"correct",level:1}, "fremd":{en:"foreign/strange",level:2}, "seltsam":{en:"strange",level:2},
+  "wunderbar":{en:"wonderful",level:1}, "furchtbar":{en:"terrible",level:2}, "schrecklich":{en:"terrible",level:2}, "herrlich":{en:"glorious",level:3},
+  "kalt":{en:"cold",level:1}, "warm":{en:"warm",level:1}, "hell":{en:"bright",level:1}, "finster":{en:"gloomy/dark",level:3},
+  "geheim":{en:"secret",level:2}, "geheimnis":{en:"secret (noun)",level:2}, "wahrheit":{en:"truth",level:2}, "täuschung":{en:"deception",level:4},
+  "vertrauen":{en:"trust",level:2}, "misstrauen":{en:"mistrust",level:4}, "verstehen":{en:"to understand",level:2}, "missverstehen":{en:"to misunderstand",level:3},
+  "erwarten":{en:"to expect",level:2}, "erwartung":{en:"expectation",level:3}, "entscheiden":{en:"to decide",level:2}, "entscheidung":{en:"decision",level:2},
+  "wählen":{en:"to choose",level:2}, "wahl":{en:"choice",level:2}, "zweifel":{en:"doubt",level:3}, "zweifeln":{en:"to doubt",level:3},
+  "berühren":{en:"to touch",level:2}, "umarmen":{en:"to embrace",level:2}, "küssen":{en:"to kiss",level:2}, "kuss":{en:"kiss",level:2},
+  "verlassen":{en:"to leave/abandon",level:2}, "verlassen (adj)":{en:"abandoned",level:3}, "besitzen":{en:"to own/possess",level:2},
+  "gehören":{en:"to belong",level:2}, "verlieren":{en:"to lose",level:2}, "verlust":{en:"loss",level:3}, "erlösen":{en:"to redeem",level:4},
+  "erlösung":{en:"redemption",level:4}, "opfer":{en:"victim/sacrifice",level:3}, "opfern":{en:"to sacrifice",level:3}, "retten":{en:"to save/rescue",level:2},
+  "rettung":{en:"rescue/salvation",level:3}, "zerstören":{en:"to destroy",level:3}, "zerbrechen":{en:"to shatter",level:3}, "brechen":{en:"to break",level:2},
+  "heilen":{en:"to heal",level:2}, "wunde":{en:"wound",level:2}, "trost":{en:"comfort",level:3}, "trösten":{en:"to console",level:3},
+  "erwachen":{en:"to awaken",level:3}, "schlafen":{en:"to sleep",level:1}, "wachen":{en:"to keep watch",level:3}, "träumen":{en:"to dream",level:2},
+  "fallen":{en:"to fall",level:1}, "steigen":{en:"to climb/rise",level:2}, "erheben":{en:"to raise/rise up",level:4}, "sinken":{en:"to sink",level:3},
+  "wachsen":{en:"to grow",level:2}, "welken":{en:"to wither",level:4}, "blühen":{en:"to bloom",level:3}, "verblassen":{en:"to fade",level:4},
+  "leuchten":{en:"to shine",level:2}, "glänzen":{en:"to gleam",level:3}, "funkeln":{en:"to sparkle",level:3}, "strahlen":{en:"to radiate/beam",level:3},
+  "verschwinden":{en:"to disappear",level:2}, "erscheinen":{en:"to appear",level:2}, "bleiben":{en:"to stay",level:1}, "vergehen":{en:"to pass (time)",level:3},
+  "dienen":{en:"to serve",level:2}, "herrschen":{en:"to rule",level:3}, "gehorchen":{en:"to obey",level:3}, "befehlen":{en:"to command",level:3},
+  "erobern":{en:"to conquer",level:3}, "besiegen":{en:"to defeat",level:3}, "unterwerfen":{en:"to subjugate",level:4}, "widerstehen":{en:"to resist",level:3},
+  "widerstand":{en:"resistance",level:3}, "aufgeben":{en:"to give up",level:2}, "durchhalten":{en:"to hold out/endure",level:3},
+  "grenze":{en:"border/limit",level:2}, "traum":{en:"dream",level:1}, "wunsch":{en:"wish",level:2}, "wünschen":{en:"to wish",level:1},
+  "sehnen":{en:"to yearn",level:3}, "verlangen":{en:"to desire/demand",level:3}, "begehren":{en:"to desire",level:4}, "lust":{en:"desire/pleasure",level:2},
+  "freude":{en:"joy",level:1}, "genuss":{en:"pleasure/enjoyment",level:3}, "leid":{en:"sorrow",level:2}, "kummer":{en:"grief",level:3},
+  "sorge":{en:"worry/care",level:2}, "sorgen":{en:"to worry",level:2}, "vergnügen":{en:"pleasure",level:3},
+  "einsamkeit":{en:"loneliness",level:3}, "gemeinschaft":{en:"community",level:3}, "gesellschaft":{en:"society",level:2},
+  "welt":{en:"world",level:1}, "himmel":{en:"heaven/sky",level:1}, "hölle":{en:"hell",level:2}, "paradies":{en:"paradise",level:2},
+  "erde":{en:"earth",level:1}, "land":{en:"country/land",level:1}, "heimat":{en:"homeland",level:2}, "reich":{en:"empire/rich",level:2},
+  "thron":{en:"throne",level:2}, "palast":{en:"palace",level:2}, "schloss":{en:"castle",level:1}, "turm":{en:"tower",level:2},
+  "mauer":{en:"wall",level:1}, "brücke":{en:"bridge",level:1}, "straße":{en:"street",level:1}, "pfad":{en:"path",level:2},
+  "reise":{en:"journey",level:1}, "reisen":{en:"to travel",level:1}, "ankommen":{en:"to arrive",level:1}, "abschied":{en:"farewell",level:2},
+  "abschied nehmen":{en:"to say goodbye",level:2}, "wiedersehen":{en:"to see again",level:1}, "willkommen":{en:"welcome",level:1},
+  "zeit":{en:"time",level:1}, "uhr":{en:"clock/hour",level:1}, "ewig":{en:"eternal",level:2}, "unendlich":{en:"infinite",level:3},
+  "endlos":{en:"endless",level:3}, "grenzenlos":{en:"boundless",level:4}, "nichts":{en:"nothing",level:1}, "alles":{en:"everything",level:1},
+  "niemand":{en:"nobody",level:1}, "jemand":{en:"somebody",level:1}, "jeder":{en:"everyone/each",level:1}, "einzige":{en:"only/sole",level:2},
+  "letzte":{en:"last",level:1}, "erste":{en:"first",level:1}, "nächste":{en:"next",level:1}, "andere":{en:"other",level:1},
+  "gleiche":{en:"same",level:1}, "eigene":{en:"own",level:1}, "wahre":{en:"true/real",level:1},
+  "geliebte":{en:"beloved",level:2}, "geliebter":{en:"beloved (m.)",level:2}, "liebste":{en:"dearest",level:2},
+  "verzeihen":{en:"to forgive",level:2}, "vergebung":{en:"forgiveness",level:3}, "reue":{en:"remorse",level:4}, "bereuen":{en:"to regret",level:3},
+  "hass":{en:"hate",level:2}, "verachten":{en:"to despise",level:4}, "verachtung":{en:"contempt",level:4}, "bewundern":{en:"to admire",level:2},
+  "bewunderung":{en:"admiration",level:3}, "respekt":{en:"respect",level:2}, "ehre":{en:"honor",level:2}, "ehren":{en:"to honor",level:3},
+  "würde":{en:"dignity",level:3}, "stolz sein":{en:"to be proud",level:2}, "demut":{en:"humility",level:4}, "unterwürfig":{en:"submissive",level:5},
+  "macht":{en:"power",level:2}, "kraft":{en:"strength",level:1}, "stärke":{en:"strength",level:2}, "schwäche":{en:"weakness",level:2},
+  "schwach":{en:"weak",level:1}, "mächtig":{en:"powerful",level:2}, "hilflos":{en:"helpless",level:3}, "ohnmacht":{en:"powerlessness",level:4},
+  "kontrolle":{en:"control",level:2}, "kontrollieren":{en:"to control",level:2}, "freiheit":{en:"freedom",level:2}, "gefangen sein":{en:"to be trapped",level:3},
+  "spiegelbild":{en:"reflection",level:3}, "schatten":{en:"shadow",level:2}, "dunkelheit":{en:"darkness",level:2}, "finsternis":{en:"darkness/gloom",level:4},
+  "licht":{en:"light",level:1}, "leuchten":{en:"to glow",level:2}
+};
+const COMMON_DE = new Set(['der','die','das','den','dem','des','ein','eine','einen','einer','eines','und','oder','aber','doch','ich','du','er','sie','es','wir','ihr','mich','dich','sich','uns','euch','mir','dir','ihm','ihn','ihnen','ist','sind','war','waren','bin','bist','seid','hat','habe','hast','habt','haben','hatte','wird','werde','wirst','werdet','werden','nicht','kein','keine','auch','noch','schon','nur','so','ja','nein','denn','als','wie','was','wer','wo','wann','warum','mit','für','von','vor','zu','zur','zum','in','im','an','am','auf','aus','bei','nach','über','unter','um','durch','gegen','ohne','bis','seit']);
+
+// Keep only German/Latin letters (äöüßÄÖÜ). Strips ALL punctuation, brackets,
+// full-width/Chinese chars like （）, digits, symbols. "（Bald" → "Bald"
+function normalizeWord(raw){
+  if(!raw) return '';
+  return String(raw).normalize('NFC').replace(/[^a-zA-ZäöüßÄÖÜ]/g,'').trim();
+}
+function isLikelyJunkToken(raw){
+  // Only pure junk — never exclude a real-looking German word just because
+  // it is missing from a small list
+  if(!raw) return true;
+  const clean = normalizeWord(raw);
+  if(!clean || clean.length < 2) return true;
+  return false;
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function formatTime(s){ const m=Math.floor(s/60), sec=Math.floor(s%60); return m+':'+String(sec).padStart(2,'0'); }
+
+// ---------- storage ----------
+function loadCards(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    cards = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(cards)) cards = [];
+  } catch(e){ cards = []; }
+  cards.forEach(c=>{
+    if(typeof c.level==='number') c.level = numToLevel(c.level);
+    if(!c.level) c.level='?';
+    if(c.excluded===undefined) c.excluded=false;
+  });
+  renderAll();
+}
+function persistCards(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(cards)); }
+  catch(e){ console.error('save failed', e); }
+}
+
+// ---------- tabs ----------
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    ['import','table','study'].forEach(t=>{ document.getElementById('view-'+t).style.display = (t===btn.dataset.tab)?'block':'none'; });
+    stopAllAudio();
+    if(btn.dataset.tab==='table') renderAll();
+    if(btn.dataset.tab==='study') renderStudySetup();
+  });
+});
+
+// ---------- LRC import ----------
+function handleLrcFiles(files){
+  if(files.length===0) return;
+  lrcLines = [];
+  const readers = files.map(file=>file.text().then(text=>{
+    const songName = file.name.replace(/\.(lrc|txt)$/i,'').replace(/^\d+[\s._-]*/,'').trim();
+    const rawLines = text.split(/\r?\n/);
+    const songLines = [];
+    rawLines.forEach(line=>{
+      const timeMatches = [...line.matchAll(/\[(\d{1,2}):(\d{2})(\.\d{1,3})?\]/g)];
+      const cleaned = line.replace(/\[\d{1,2}:\d{2}(\.\d{1,3})?\]/g,'').trim();
+      if(!cleaned || /^\[.*\]$/.test(cleaned)) return;
+      if(timeMatches.length===0){ songLines.push({text:cleaned, song:songName, time:null, endTime:null}); }
+      else timeMatches.forEach(m=>{
+        const seconds = parseInt(m[1],10)*60 + parseFloat(m[2]+(m[3]||''));
+        songLines.push({text:cleaned, song:songName, time:seconds, endTime:null});
+      });
+    });
+    songLines.sort((a,b)=>(a.time??0)-(b.time??0));
+    songLines.forEach((l,i)=>{
+      if(l.time!==null){
+        const next = songLines.slice(i+1).find(x=>x.time!==null);
+        l.endTime = next ? next.time : l.time + 4.5;
+      }
+    });
+    return songLines;
+  }));
+  Promise.all(readers).then(results=>{ results.forEach(r=>lrcLines.push(...r)); renderLrcLines(); });
+}
+document.getElementById('lrcFileInput').addEventListener('change', e=>handleLrcFiles(Array.from(e.target.files||[])));
+document.getElementById('lrcFolderInput').addEventListener('change', e=>handleLrcFiles(Array.from(e.target.files||[]).filter(f=>/\.(lrc|txt)$/i.test(f.name))));
+
+function renderLrcLines(){
+  const wrap = document.getElementById('lrcLinesWrap');
+  const list = document.getElementById('lrcLinesList');
+  if(lrcLines.length===0){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  list.innerHTML = lrcLines.map((l,i)=>
+    `<div class="tok" data-i="${i}" style="display:block; padding:4px 6px; cursor:pointer;">${escapeHtml(l.text)} <span style="opacity:.5; font-size:12px;">— ${escapeHtml(l.song)}${l.time!==null?' · '+formatTime(l.time):''}</span></div>`
+  ).join('');
+  list.querySelectorAll('[data-i]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const l = lrcLines[el.dataset.i];
+      document.getElementById('lyricInput').value = l.text;
+      document.getElementById('songInput').value = l.song;
+      currentLineMeta = { song:l.song, time:l.time, endTime:l.endTime };
+      document.getElementById('tokenizeBtn').click();
+    });
+  });
+}
+
+// ---------- MP3 import ----------
+function slugSong(name){ return (name||'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
+function handleMp3Files(files){
+  audioMap = {};
+  files.forEach(file=>{
+    const songName = file.name.replace(/\.[^.]+$/,'').replace(/^\d+[\s._-]*/,'').trim();
+    const url = URL.createObjectURL(file);
+    audioMap[slugSong(songName)] = { url, el:new Audio(url) };
+  });
+  document.getElementById('mp3Status').textContent = files.length + ' audio file(s) loaded ✓';
+}
+document.getElementById('mp3FileInput').addEventListener('change', e=>handleMp3Files(Array.from(e.target.files||[])));
+document.getElementById('mp3FolderInput').addEventListener('change', e=>handleMp3Files(Array.from(e.target.files||[]).filter(f=>/audio/.test(f.type)||/\.(mp3|m4a|wav|ogg)$/i.test(f.name))));
+
+function findAudioForSong(song){
+  if(!song) return null;
+  const key = slugSong(song);
+  if(audioMap[key]) return audioMap[key];
+  const match = Object.keys(audioMap).find(k=>k.includes(key)||key.includes(k));
+  return match ? audioMap[match] : null;
+}
+function stopAllAudio(){ Object.values(audioMap).forEach(a=>{ try{ a.el.pause(); }catch(e){} }); }
+function playSnippet(card){
+  const audio = findAudioForSong(card.song);
+  if(!audio || card.startTime==null) return;
+  stopAllAudio();
+  const el = audio.el;
+  el.currentTime = card.startTime;
+  const stopAt = card.endTime ?? (card.startTime + 4.5);
+  const onTime = ()=>{ if(el.currentTime >= stopAt){ el.pause(); el.removeEventListener('timeupdate', onTime); } };
+  el.addEventListener('timeupdate', onTime);
+  el.play().catch(()=>{});
+}
+
+// ---------- manual tokenizer ----------
+document.getElementById('tokenizeBtn').addEventListener('click', ()=>{
+  const text = document.getElementById('lyricInput').value.trim();
+  if(!text) return;
+  const picker = document.getElementById('lyricPicker');
+  picker.innerHTML = '';
+  text.split(/(\s+)/).forEach(p=>{
+    if(/^\s+$/.test(p) || p===''){ picker.appendChild(document.createTextNode(p)); return; }
+    const span = document.createElement('span');
+    span.textContent = p; span.style.cursor='pointer'; span.style.padding='1px 3px'; span.style.borderRadius='3px';
+    span.addEventListener('click', ()=>{
+      picker.querySelectorAll('span').forEach(s=>s.style.background='');
+      span.style.background = 'var(--gold)';
+      document.getElementById('wordInput').value = normalizeWord(p);
+      selectedToken = text;
+    });
+    picker.appendChild(span);
+  });
+  document.getElementById('pickerWrap').style.display = 'block';
+});
+
+// ---------- auto-generate cards for every word ----------
+document.getElementById('autoGenBtn').addEventListener('click', ()=>{
+  const skipCommon = document.getElementById('skipCommonWords').checked;
+  const skipExisting = document.getElementById('skipExisting').checked;
+  const existingWords = new Set(cards.map(c=>toLemma(c.word).toLowerCase()));
+  const firstOccurrence = new Map();
+  lrcLines.forEach(l=>{
+    l.text.split(/\s+/).forEach(tok=>{
+      const clean = normalizeWord(tok);
+      if(!clean) return;
+      if(isLikelyJunkToken(clean)) return;
+      const lemma = toLemma(clean);
+      const lower = lemma.toLowerCase();
+      if(skipCommon && COMMON_DE.has(lower)) return;
+      if(skipExisting && existingWords.has(lower)) return;
+      if(!firstOccurrence.has(lower)) firstOccurrence.set(lower, {word:lemma, line:l.text, song:l.song, startTime:l.time, endTime:l.endTime});
+    });
+  });
+  const showName = document.getElementById('showInput').value.trim();
+  let added=0, translated=0;
+  firstOccurrence.forEach(entry=>{
+    const dictHit = lookupDict(entry.word);
+    if(dictHit) translated++;
+    const lvl = (dictHit && dictHit.level != null) ? numToLevel(dictHit.level) : heuristicLevel(entry.word, dictHit?dictHit.en:'');
+    cards.unshift({
+      id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+      word:entry.word, translation:dictHit?dictHit.en:'', lineTranslation:'',
+      level:lvl, mastered:false, excluded:false,
+      show:showName, song:entry.song, line:entry.line,
+      startTime:entry.startTime??null, endTime:entry.endTime??null, note:'', created:Date.now()
+    });
+    added++;
+  });
+  persistCards(); renderAll();
+  document.getElementById('autoGenMsg').textContent = `${added} cards created ✓ — conjugations merged to lemmas; ${translated} already translated`;
+});
+
+// ---------- manual save ----------
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  const raw = document.getElementById('wordInput').value.trim();
+  const word = normalizeWord(raw) || raw;
+  if(!word){ document.getElementById('wordInput').focus(); return; }
+  const typed = document.getElementById('translationInput').value.trim();
+  const lemma = toLemma(word);
+  const dictHit = lookupDict(lemma);
+  const lvl = (dictHit && dictHit.level != null) ? numToLevel(dictHit.level) : heuristicLevel(lemma, typed || (dictHit?dictHit.en:''));
+  cards.unshift({
+    id: Date.now().toString(36), word: lemma, translation: typed || (dictHit?dictHit.en:''), lineTranslation:'',
+    level: lvl, mastered:false, excluded:false,
+    show: document.getElementById('showInput').value.trim(),
+    song: document.getElementById('songInput').value.trim(),
+    line: selectedToken || document.getElementById('lyricInput').value.trim(),
+    startTime: currentLineMeta?currentLineMeta.time:null, endTime: currentLineMeta?currentLineMeta.endTime:null,
+    note: document.getElementById('noteInput').value.trim(), created: Date.now()
+  });
+  persistCards();
+  ['wordInput','translationInput','songInput','noteInput','lyricInput'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pickerWrap').style.display='none';
+  selectedToken=null; currentLineMeta=null;
+  document.getElementById('saveMsg').textContent = 'Saved ✓';
+  setTimeout(()=>document.getElementById('saveMsg').textContent='',2000);
+  renderAll();
+});
+
+// ---------- full free dictionary (Beolingus) + built-in levels ----------
+let extraDict = {}; // lowercase de → { en, level:null }
+let beolingusLoaded = false;
+
+// Generate likely lemma candidates for German inflected forms
+// e.g. Abgrunds → Abgrund, Hauses → Haus, finden forms, etc.
+function lemmaCandidates(key){
+  const out = [];
+  const add = (s)=>{ if(s && s.length >= 2 && s !== key) out.push(s); };
+  // genitive / plural-ish endings: -es, -s, -n, -en, -er, -e, -em, -ens
+  if(key.endsWith('es') && key.length > 4){ add(key.slice(0,-2)); add(key.slice(0,-1)); } // Hauses→Haus, Abgrundes→Abgrund
+  if(key.endsWith('ens') && key.length > 5) add(key.slice(0,-3));
+  if(key.endsWith('em') && key.length > 4) add(key.slice(0,-2));
+  if(key.endsWith('er') && key.length > 4){ add(key.slice(0,-2)); add(key.slice(0,-1)); }
+  if(key.endsWith('en') && key.length > 4){ add(key.slice(0,-2)); add(key.slice(0,-1)); }
+  if(key.endsWith('s') && key.length > 3 && !key.endsWith('ss') && !key.endsWith('us') && !key.endsWith('is')) add(key.slice(0,-1)); // Abgrunds→Abgrund
+  if(key.endsWith('n') && key.length > 3 && !key.endsWith('en') && !key.endsWith('nn')) add(key.slice(0,-1));
+  if(key.endsWith('e') && key.length > 3){ add(key.slice(0,-1)); add(key + 'n'); add(key.slice(0,-1) + 'en'); }
+  if(key.endsWith('t') && key.length > 3){ add(key.slice(0,-1) + 'en'); add(key + 'en'); }
+  if(!key.endsWith('en') && key.length > 3){ add(key + 'en'); add(key + 'n'); }
+  // umlaut reverse guesses (Häuser→Haus is hard; try without common plural patterns)
+  if(key.endsWith('er') && key.length > 4) add(key.slice(0,-2) + 'e');
+  return out;
+}
+
+function isMetaGloss(en){
+  if(!en) return true;
+  const s = en.toLowerCase();
+  // Reject grammatical meta-descriptions from Wiktionary
+  if(/\b(imperative|participle|infinitive|subjunctive|indicative|conjugation|declension|genitive|dative|accusative|nominative|plural form|singular form|first-person|second-person|third-person)\b/.test(s)) return true;
+  if(/^(of |form of |see |alternative |abbreviation )/i.test(s)) return true;
+  if(s.length > 70) return true;
+  return false;
+}
+function cleanGloss(en){
+  if(!en) return '';
+  let t = String(en).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  // drop parenthetical noise at end
+  t = t.replace(/\([^)]{0,40}\)\s*$/,'').trim();
+  // take first useful sense
+  t = t.split(/[;|]/)[0].trim();
+  if(isMetaGloss(t)) return '';
+  return t.slice(0, 70);
+}
+
+function lookupDict(word){
+  const key = normalizeWord(word).toLowerCase();
+  if(!key) return null;
+  const ok = (h) => h && h.en && !isMetaGloss(h.en);
+  // 1) exact: built-in (CEFR + translation) then Beolingus
+  let hit = GERMAN_DICT[key] || extraDict[key];
+  if(ok(hit)) return hit;
+  // 2) if conjugated form, use lemma entry
+  const lemma = LEMMA_MAP[key];
+  if(lemma){
+    hit = GERMAN_DICT[lemma] || extraDict[lemma];
+    if(ok(hit)) return hit;
+  }
+  // 3) morphological fallbacks (Abgrunds→Abgrund) — only endings that don't invent new short words
+  for(const c of lemmaCandidates(key)){
+    hit = GERMAN_DICT[c] || extraDict[c];
+    if(ok(hit)) return hit;
+  }
+  return null;
+}
+
+// Free Wiktionary REST API (no key) — used only for remaining gaps
+async function wiktionaryLookup(word){
+  const key = normalizeWord(word);
+  if(!key) return null;
+  // Prefer lemma translation from local dict first
+  const lemma = LEMMA_MAP[key.toLowerCase()];
+  if(lemma){
+    const hit = GERMAN_DICT[lemma] || extraDict[lemma];
+    if(hit && hit.en && !isMetaGloss(hit.en)) return { en: hit.en, level: hit.level != null ? hit.level : null };
+  }
+  try {
+    const tries = [key, key.charAt(0).toUpperCase() + key.slice(1)];
+    // only try safe morphology if exact miss
+    for(const c of lemmaCandidates(key.toLowerCase()).slice(0, 4)){
+      tries.push(c.charAt(0).toUpperCase() + c.slice(1));
+    }
+    for(const title of tries){
+      const url = 'https://en.wiktionary.org/api/rest_v1/page/definition/' + encodeURIComponent(title);
+      const res = await fetch(url);
+      if(!res.ok) continue;
+      const data = await res.json();
+      const list = data.de || data.en || Object.values(data).find(v => Array.isArray(v));
+      if(!Array.isArray(list) || !list.length) continue;
+      for(const entry of list){
+        for(const d of (entry.definitions || [])){
+          const gloss = cleanGloss(d.definition || '');
+          if(gloss) return { en: gloss, level: null };
+        }
+      }
+    }
+  } catch(e){ console.warn('wiktionary', word, e); }
+  // last resort: lemma from map with built-in
+  if(lemma && GERMAN_DICT[lemma]) return { en: GERMAN_DICT[lemma].en, level: GERMAN_DICT[lemma].level };
+  return null;
+}
+
+// Beolingus: "Haus {n}; Gebäude {n} | Häuser {pl} :: house | houses"
+// Only index pure single-word German headwords — never the first word of a phrase,
+// or short words get polluted (e.g. "Dein Wunsch ist mir Befehl" → wrong "dein").
+function parseBeolingusLine(line){
+  const parts = line.split('::');
+  if(parts.length < 2) return [];
+  const deSide = parts[0].trim();
+  const enSide = parts.slice(1).join('::').trim();
+  const deGroups = deSide.split('|').map(s => s.trim()).filter(Boolean);
+  const enGroups = enSide.split('|').map(s => s.trim()).filter(Boolean);
+  const out = [];
+  for(let gi = 0; gi < deGroups.length; gi++){
+    // Up to 2 short senses for richer gloss (e.g. "abyss; precipice")
+    const enParts = (enGroups[gi] || enGroups[0] || '').split(/[;|]/).map(s =>
+      s.replace(/\{[^}]*\}/g,'').replace(/\[[^\]]*\]/g,'').replace(/<[^>]*>/g,'').trim()
+    ).filter(s => s && s.length <= 40 && !(/[.!?]/.test(s) && s.split(/\s+/).length > 4));
+    let enRaw = enParts.slice(0, 2).join('; ');
+    if(!enRaw || enRaw.length > 70) continue;
+    // lemma English for conjugation rows (first group usually has the main gloss)
+    const lemmaEn = ((enGroups[0] || '').split(/[;|]/)[0] || enRaw).replace(/\{[^}]*\}/g,'').replace(/\[[^\]]*\]/g,'').trim();
+    const deAlts = deGroups[gi].split(';');
+    for(const alt of deAlts){
+      let de = alt.replace(/\{[^}]*\}/g,' ').replace(/\[[^\]]*\]/g,' ').replace(/\([^)]*\)/g,' ').trim();
+      // conjugation tables: "ich will", "du willst", "er/sie fliegt"
+      const conj = de.match(/^(?:ich|du|er\/sie|er|sie|wir|ihr|man)\s+(\S+)$/i);
+      if(conj){
+        const form = normalizeWord(conj[1]).toLowerCase();
+        if(form.length >= 2 && form.length <= 35){
+          // map conjugated form to the lemma gloss (or this group's gloss)
+          const gloss = (lemmaEn && lemmaEn.length <= 55) ? lemmaEn : enRaw;
+          if(gloss) out.push({ de: form, en: gloss });
+        }
+        continue;
+      }
+      // require a single token (no spaces) — skip phrases/sentences
+      if(!de || /\s/.test(de)) continue;
+      const deKey = normalizeWord(de).toLowerCase();
+      if(!deKey || deKey.length < 2 || deKey.length > 35) continue;
+      out.push({ de: deKey, en: enRaw });
+    }
+  }
+  return out;
+}
+function glossScore(en){ return (en||'').length + ((en||'').split(/\s+/).length * 4); }
+
+// ---------- one-click: load dict + translate + levels + wiki gaps + merge + exclude ----------
+async function ensureBeolingusLoaded(msgEl){
+  if(beolingusLoaded && Object.keys(extraDict).length > 1000) return true;
+  msgEl.style.color = 'var(--ink-soft)';
+  msgEl.textContent = 'Downloading free dictionary (~28 MB)…';
+  try {
+    const res = await fetch('https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt');
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const textBody = await res.text();
+    msgEl.textContent = 'Parsing dictionary…';
+    let added = 0;
+    extraDict = {};
+    const lines = textBody.split(/\r?\n/);
+    const chunk = 8000;
+    for(let i = 0; i < lines.length; i += chunk){
+      const endL = Math.min(i + chunk, lines.length);
+      for(let j = i; j < endL; j++){
+        const line = lines[j];
+        if(!line || line[0] === '#' || line[0] === '%') continue;
+        for(const p of parseBeolingusLine(line)){
+          if(GERMAN_DICT[p.de]) continue;
+          if(isMetaGloss(p.en)) continue;
+          const prev = extraDict[p.de];
+          if(!prev){ extraDict[p.de] = { en: p.en, level: null }; added++; }
+          else if(glossScore(p.en) < glossScore(prev.en)){ extraDict[p.de].en = p.en; }
+        }
+      }
+      if(i % 40000 === 0){
+        msgEl.textContent = 'Parsing… ' + Math.round(100 * endL / lines.length) + '% (' + added.toLocaleString() + ' words)';
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+    beolingusLoaded = true;
+    msgEl.textContent = 'Dictionary ready (' + added.toLocaleString() + ' words). Filling cards…';
+    return true;
+  } catch(err){
+    msgEl.style.color = 'var(--bad)';
+    msgEl.textContent = 'Dictionary download failed — using built-in list only. ' + (err.message || err);
+    return false;
+  }
+}
+
+function mergeConjugationsInPlace(){
+  const byLemma = new Map();
+  const next = [];
+  let removed = 0;
+  cards.forEach(c => {
+    const lemma = toLemma(c.word);
+    const key = lemma.toLowerCase();
+    if(!byLemma.has(key)){
+      c.word = lemma;
+      byLemma.set(key, c);
+      next.push(c);
+    } else {
+      const keep = byLemma.get(key);
+      if((c.translation||'').length > (keep.translation||'').length) keep.translation = c.translation;
+      if((!keep.level || keep.level==='?') && c.level && c.level!=='?') keep.level = c.level;
+      if(!keep.line && c.line) keep.line = c.line;
+      if(!keep.song && c.song) keep.song = c.song;
+      removed++;
+    }
+  });
+  cards.length = 0;
+  cards.push(...next);
+  return removed;
+}
+
+document.getElementById('doAllBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('doAllBtn');
+  const msg = document.getElementById('dictMsg');
+  btn.disabled = true;
+  await ensureBeolingusLoaded(msg);
+
+  // 1) local fill + lemma merge surface forms that are conjugations
+  let filled = 0, leveled = 0;
+  cards.forEach(c => {
+    const w = normalizeWord(c.word) || c.word;
+    const lemma = toLemma(w);
+    if(lemma !== c.word) c.word = lemma;
+    if(!w || isLikelyJunkToken(lemma)){ c.excluded = true; return; }
+    const hit = lookupDict(lemma);
+    if(hit && hit.en && !isMetaGloss(hit.en)){
+      if(!c.translation || isMetaGloss(c.translation) || hit.en.length >= (c.translation||'').length){
+        c.translation = hit.en; filled++;
+      }
+      if(hit.level != null && (!c.level || c.level === '?')){
+        c.level = numToLevel(hit.level); leveled++;
+      }
+      c.excluded = false;
+    }
+    if(!c.level || c.level === '?'){
+      c.level = heuristicLevel(c.word, c.translation || '');
+      leveled++;
+    }
+  });
+  const removed = mergeConjugationsInPlace();
+  persistCards(); renderAll();
+  msg.textContent = `Local dict: ${filled} translations, ${leveled} levels, ${removed} conjugations merged. Looking up gaps…`;
+
+  // 2) Wiktionary for gaps (and fix meta-glosses)
+  const todo = cards.filter(c => !c.excluded && (!c.translation || isMetaGloss(c.translation)));
+  let wikiFilled = 0;
+  for(let i = 0; i < todo.length; i++){
+    const c = todo[i];
+    msg.textContent = `Wiktionary… ${i+1}/${todo.length} (${wikiFilled} found)`;
+    const hit = await wiktionaryLookup(c.word);
+    if(hit && hit.en && !isMetaGloss(hit.en)){
+      c.translation = hit.en;
+      c.excluded = false;
+      if(!c.level || c.level === '?') c.level = heuristicLevel(c.word, hit.en);
+      const k = normalizeWord(c.word).toLowerCase();
+      if(k && !extraDict[k] && !GERMAN_DICT[k]) extraDict[k] = hit;
+      wikiFilled++;
+    }
+    if(i % 8 === 0){ persistCards(); await new Promise(r => setTimeout(r, 80)); }
+    else await new Promise(r => setTimeout(r, 60));
+  }
+
+  // 3) exclude unknowns / meta-only
+  let excluded = 0;
+  cards.forEach(c => {
+    if(c.excluded) return;
+    if(!c.translation || !c.translation.trim() || isMetaGloss(c.translation)){
+      c.excluded = true; excluded++;
+    }
+    if(!c.level || c.level === '?') c.level = heuristicLevel(c.word, c.translation || '');
+  });
+
+  persistCards(); renderAll();
+  btn.disabled = false;
+  msg.style.color = 'var(--good)';
+  msg.textContent = `Done ✓ ${filled + wikiFilled} translations, levels filled, ${removed} conjugations merged, ${excluded} unknowns excluded. Saved in this browser.`;
+});
+
+// ---------- backup ----------
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(cards,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='buehnenworter-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('importBtn').addEventListener('click', ()=>document.getElementById('importFileInput').click());
+document.getElementById('importFileInput').addEventListener('change', async e=>{
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    const restored = JSON.parse(await file.text());
+    if(!Array.isArray(restored)) throw new Error('bad format');
+    restored.forEach(c=>{ if(typeof c.level==='number') c.level=numToLevel(c.level); if(!c.level) c.level='?'; if(c.excluded===undefined) c.excluded=false; });
+    const existingIds = new Set(cards.map(c=>c.id));
+    const merged = restored.filter(c=>!existingIds.has(c.id));
+    cards = [...cards, ...merged];
+    persistCards(); renderAll();
+    document.getElementById('dictMsg').textContent = merged.length + ' cards restored from backup ✓';
+  }catch(err){ document.getElementById('dictMsg').textContent = 'Could not read that backup file.'; }
+  e.target.value='';
+});
+
+// ---------- All Words table ----------
+let tableShowFilter = '';
+let tableLevelFilter = new Set(LEVELS);
+function renderAll(){ renderShowChips(); renderLevelChipsTable(); renderLevelChipsStudy(); renderStudyShowFilter(); renderTable(); }
+
+function renderShowChips(){
+  const wrap = document.getElementById('showChips'); if(!wrap) return;
+  const shows = [...new Set(cards.map(c=>c.show).filter(Boolean))].sort();
+  wrap.innerHTML = shows.map(s=>{
+    const count = cards.filter(c=>c.show===s).length;
+    const active = s===tableShowFilter;
+    return `<button type="button" class="chip${active?' active':''}" data-show="${escapeHtml(s)}">${escapeHtml(s)} · ${count}</button>`;
+  }).join('') + (shows.length>1 ? `<button type="button" class="chip${tableShowFilter===''?' active':''}" data-show="">All</button>` : '');
+  wrap.querySelectorAll('.chip').forEach(chip=>chip.addEventListener('click', ()=>{ tableShowFilter = chip.dataset.show; renderShowChips(); renderTable(); }));
+}
+function renderLevelChipsTable(){
+  const wrap = document.getElementById('levelChipsTable'); if(!wrap) return;
+  wrap.innerHTML = LEVELS.map(lv=>{
+    const active = tableLevelFilter.has(lv);
+    return `<button type="button" class="chip${active?' active':''}" data-lv="${lv}">${LEVEL_LABELS[lv]}</button>`;
+  }).join('');
+  wrap.querySelectorAll('.chip').forEach(chip=>chip.addEventListener('click', ()=>{
+    const lv = chip.dataset.lv;
+    if(tableLevelFilter.has(lv)) tableLevelFilter.delete(lv); else tableLevelFilter.add(lv);
+    renderLevelChipsTable(); renderTable();
+  }));
+}
+document.getElementById('searchInput').addEventListener('input', renderTable);
+
+// Column sort state (click header: asc → desc → default level+word)
+let tableSort = { key: 'level', dir: 1 }; // dir: 1 asc, -1 desc
+
+function updateSortHeaders(){
+  document.querySelectorAll('#masterTable th.sortable').forEach(th=>{
+    const ind = th.querySelector('.sort-ind');
+    const active = th.dataset.sort === tableSort.key;
+    th.classList.toggle('sorted', active);
+    if(ind) ind.textContent = active ? (tableSort.dir === 1 ? '▲' : '▼') : '';
+  });
+}
+
+function sortCards(list){
+  const { key, dir } = tableSort;
+  const cmpStr = (a,b) => (a||'').localeCompare(b||'', 'de', { sensitivity:'base' });
+  return list.slice().sort((a,b)=>{
+    let r = 0;
+    if(key === 'word') r = cmpStr(a.word, b.word);
+    else if(key === 'level') r = levelSort(a.level) - levelSort(b.level) || cmpStr(a.word, b.word);
+    else if(key === 'translation') r = cmpStr(a.translation, b.translation);
+    else if(key === 'line') r = cmpStr(a.line, b.line);
+    else if(key === 'show') r = cmpStr(a.show, b.show) || cmpStr(a.song, b.song);
+    else if(key === 'status') r = (a.mastered?1:0) - (b.mastered?1:0) || cmpStr(a.word, b.word);
+    else if(key === 'excluded') r = (a.excluded?1:0) - (b.excluded?1:0) || cmpStr(a.word, b.word);
+    else r = levelSort(a.level) - levelSort(b.level) || cmpStr(a.word, b.word);
+    return r * dir;
+  });
+}
+
+// Wire sortable headers once
+document.querySelectorAll('#masterTable th.sortable').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.sort;
+    if(tableSort.key === key) tableSort.dir = -tableSort.dir;
+    else { tableSort.key = key; tableSort.dir = 1; }
+    renderTable();
+  });
+});
+
+function renderTable(){
+  const q = (document.getElementById('searchInput').value||'').toLowerCase().trim();
+  let filtered = cards.filter(c=>(!tableShowFilter || c.show===tableShowFilter) && tableLevelFilter.has(c.level||'?'));
+  if(q) filtered = filtered.filter(c=>
+    (c.word||'').toLowerCase().includes(q) || (c.translation||'').toLowerCase().includes(q) || (c.line||'').toLowerCase().includes(q)
+  );
+  filtered = sortCards(filtered);
+  updateSortHeaders();
+  document.getElementById('countLabel').textContent = filtered.length + ' words';
+  const body = document.getElementById('masterBody');
+  if(filtered.length===0){ body.innerHTML = `<tr><td colspan="8" class="empty">No words yet — import lyrics or add one manually.</td></tr>`; return; }
+  body.innerHTML = filtered.map(c=>`
+    <tr>
+      <td><input type="text" class="word-edit" data-id="${c.id}" value="${escapeHtml(c.word)}" title="Edit word (fix typos)"></td>
+      <td><select class="lvl-edit" data-id="${c.id}">${LEVELS.map(lv=>`<option value="${lv}" ${(c.level||'?')===lv?'selected':''}>${LEVEL_LABELS[lv]}</option>`).join('')}</select></td>
+      <td><input type="text" class="tr-edit" data-id="${c.id}" value="${escapeHtml(c.translation||'')}" placeholder="add translation…" style="width:140px; border:1px solid #cbb98e; border-radius:4px; padding:5px 7px; font-size:12.5px;"></td>
+      <td style="max-width:280px;">
+        <input type="text" class="line-edit" data-id="${c.id}" value="${escapeHtml(c.line||'')}" placeholder="example line…" title="Edit example line (fix lyric typos)">
+        ${c.lineTranslation?`<div class="line-en" style="margin-top:4px;">"${escapeHtml(c.lineTranslation)}"</div>`:''}
+      </td>
+      <td>${escapeHtml(c.show||'—')}${c.song?'<br><span style="color:var(--ink-soft); font-size:11.5px;">'+escapeHtml(c.song)+'</span>':''}</td>
+      <td>${c.mastered?'<span style="color:var(--good);">✓ mastered</span>':'<span style="color:var(--ink-soft);">learning</span>'}</td>
+      <td style="text-align:center;"><input type="checkbox" class="excl-check" data-id="${c.id}" ${c.excluded?'checked':''}></td>
+      <td style="white-space:nowrap;">
+        <button class="btn ghost small edit-btn" data-id="${c.id}" title="Edit all fields">✎</button>
+        <button class="btn ghost small del-btn" data-id="${c.id}">✕</button>
+      </td>
+    </tr>
+  `).join('');
+  body.querySelectorAll('.word-edit').forEach(inp=>{
+    const save = ()=>{
+      const card = cards.find(c=>c.id===inp.dataset.id);
+      if(card){ card.word = inp.value.trim() || card.word; persistCards(); }
+    };
+    inp.addEventListener('change', save);
+    inp.addEventListener('blur', save);
+  });
+  body.querySelectorAll('.line-edit').forEach(inp=>{
+    const save = ()=>{
+      const card = cards.find(c=>c.id===inp.dataset.id);
+      if(card){ card.line = inp.value.trim(); persistCards(); }
+    };
+    inp.addEventListener('change', save);
+    inp.addEventListener('blur', save);
+  });
+  body.querySelectorAll('.lvl-edit').forEach(sel=>sel.addEventListener('change', ()=>{
+    const card = cards.find(c=>c.id===sel.dataset.id); if(card){ card.level=sel.value; persistCards(); }
+  }));
+  body.querySelectorAll('.tr-edit').forEach(inp=>inp.addEventListener('change', ()=>{
+    const card = cards.find(c=>c.id===inp.dataset.id); if(card){ card.translation=inp.value.trim(); persistCards(); }
+  }));
+  body.querySelectorAll('.excl-check').forEach(chk=>chk.addEventListener('change', ()=>{
+    const card = cards.find(c=>c.id===chk.dataset.id); if(card){ card.excluded=chk.checked; persistCards(); }
+  }));
+  body.querySelectorAll('.edit-btn').forEach(b=>b.addEventListener('click', ()=> openEditModal(b.dataset.id)));
+  body.querySelectorAll('.del-btn').forEach(b=>b.addEventListener('click', ()=>{
+    cards = cards.filter(c=>c.id!==b.dataset.id); persistCards(); renderAll();
+  }));
+}
+
+// ---------- Study setup ----------
+let studyLevelFilter = new Set(LEVELS);
+function renderStudyShowFilter(){
+  const sel = document.getElementById('studyShowFilter'); if(!sel) return;
+  const shows = [...new Set(cards.map(c=>c.show).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All collections</option>' + shows.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  sel.value = shows.includes(current) ? current : '';
+}
+function renderLevelChipsStudy(){
+  const wrap = document.getElementById('levelChipsStudy'); if(!wrap) return;
+  wrap.innerHTML = LEVELS.map(lv=>{
+    const active = studyLevelFilter.has(lv);
+    return `<button type="button" class="chip${active?' active':''}" data-lv="${lv}">${LEVEL_LABELS[lv]}</button>`;
+  }).join('');
+  wrap.querySelectorAll('.chip').forEach(chip=>chip.addEventListener('click', ()=>{
+    const lv = chip.dataset.lv;
+    if(studyLevelFilter.has(lv)) studyLevelFilter.delete(lv); else studyLevelFilter.add(lv);
+    renderLevelChipsStudy(); updateStudyPreview();
+  }));
+}
+function shuffleArray(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function studyPool(){
+  const showFilter = document.getElementById('studyShowFilter').value;
+  const includeMastered = document.getElementById('studyIncludeMastered').checked;
+  const order = (document.getElementById('studyOrder') || {}).value || 'shuffle';
+  let pool = cards.filter(c=>
+    (!showFilter || c.show===showFilter) &&
+    studyLevelFilter.has(c.level||'?') &&
+    !c.excluded &&
+    (includeMastered || !c.mastered)
+  );
+  if(order === 'alpha') pool = pool.slice().sort((a,b)=> a.word.localeCompare(b.word,'de'));
+  else if(order === 'level') pool = pool.slice().sort((a,b)=> levelSort(a.level)-levelSort(b.level) || a.word.localeCompare(b.word,'de'));
+  else pool = shuffleArray(pool); // shuffle
+  return pool;
+}
+function updateStudyPreview(){
+  const n = studyPool().length;
+  const order = (document.getElementById('studyOrder') || {}).value || 'shuffle';
+  const orderLabel = order === 'alpha' ? 'alphabetical' : order === 'level' ? 'easiest first' : 'shuffled';
+  document.getElementById('studyCountPreview').textContent = n + ' word(s) · order: ' + orderLabel + ' · ' + Math.ceil(n/10) + ' group(s) of up to 10.';
+}
+document.getElementById('studyShowFilter').addEventListener('change', updateStudyPreview);
+document.getElementById('studyIncludeMastered').addEventListener('change', updateStudyPreview);
+document.getElementById('studyOrder').addEventListener('change', updateStudyPreview);
+function renderStudySetup(){
+  document.getElementById('studySetup').style.display='block';
+  document.getElementById('studySession').style.display='none';
+  renderStudyShowFilter(); renderLevelChipsStudy(); updateStudyPreview();
+}
+
+// ---------- Study session ----------
+let groups = []; let groupIdx = 0; let flashQueue = [];
+document.getElementById('startStudyBtn').addEventListener('click', ()=>{
+  const pool = studyPool();
+  if(pool.length===0) return;
+  groups = [];
+  for(let i=0;i<pool.length;i+=10) groups.push(pool.slice(i,i+10).map(c=>c.id));
+  groupIdx = 0;
+  document.getElementById('studySetup').style.display='none';
+  document.getElementById('studySession').style.display='block';
+  document.getElementById('sessionDone').style.display='none';
+  startGroup();
+});
+document.getElementById('endSessionBtn').addEventListener('click', ()=>{ stopAllAudio(); renderStudySetup(); });
+document.getElementById('backToSetupBtn').addEventListener('click', renderStudySetup);
+
+function startGroup(){
+  flashQueue = [...groups[groupIdx]];
+  document.getElementById('flashPhase').style.display='block';
+  document.getElementById('quizPhase').style.display='none';
+  document.getElementById('sessionDone').style.display='none';
+  document.getElementById('groupProgress').textContent = `Group ${groupIdx+1} of ${groups.length}`;
+  showFlashcard();
+}
+function currentFlashCard(){ return flashQueue.length ? cards.find(c=>c.id===flashQueue[0]) : null; }
+function showFlashcard(){
+  const fc = document.getElementById('flipcard'); fc.classList.remove('flipped');
+  const c = currentFlashCard();
+  const playFront = document.getElementById('playBtnFront'), playBack = document.getElementById('playBtnBack');
+  if(!c){ startQuiz(); return; }
+  document.getElementById('frontLevel').textContent = LEVEL_LABELS[c.level||'?'];
+  document.getElementById('frontWord').textContent = c.word;
+  document.getElementById('frontShow').textContent = c.show||'';
+  document.getElementById('backShow').textContent = c.show||'';
+  document.getElementById('backTranslation').textContent = c.translation || '(no translation yet)';
+  document.getElementById('backLine').textContent = c.line ? '"'+c.line+'"' : (c.note||'');
+  document.getElementById('backLineEn').textContent = c.lineTranslation ? '"'+c.lineTranslation+'"' : '';
+  document.getElementById('backSong').textContent = c.song ? '— from "'+c.song+'"' : '';
+  const hasAudio = !!findAudioForSong(c.song) && c.startTime!=null;
+  playFront.style.display = hasAudio?'inline-block':'none';
+  playBack.style.display = hasAudio?'inline-block':'none';
+  playFront.onclick = ()=>playSnippet(c); playBack.onclick = ()=>playSnippet(c);
+  stopAllAudio();
+  if(hasAudio && document.getElementById('autoPlayAudio').checked) playSnippet(c);
+}
+document.getElementById('flipcard').addEventListener('click', ()=>{
+  const fc = document.getElementById('flipcard'); fc.classList.toggle('flipped');
+  const c = currentFlashCard();
+  if(c && fc.classList.contains('flipped') && document.getElementById('autoPlayAudio').checked) playSnippet(c);
+});
+document.getElementById('knowBtn').addEventListener('click', ()=>{
+  const c = currentFlashCard(); if(!c) return;
+  c.mastered = true; flashQueue.shift(); stopAllAudio(); showFlashcard(); persistCards();
+});
+document.getElementById('againBtn').addEventListener('click', ()=>{
+  if(!flashQueue.length) return;
+  const id = flashQueue.shift(); flashQueue.push(id); stopAllAudio(); showFlashcard();
+});
+
+// ---------- matching quiz ----------
+let quizPairs = []; let quizSelDe = null; let quizSelEn = null; let quizCorrect = 0; let quizTotal = 0;
+function startQuiz(){
+  stopAllAudio();
+  document.getElementById('flashPhase').style.display='none';
+  document.getElementById('quizPhase').style.display='block';
+  document.getElementById('nextGroupBtn').style.display='none';
+  quizPairs = groups[groupIdx].map(id=>cards.find(c=>c.id===id)).filter(c=>c && c.translation);
+  quizCorrect = 0; quizTotal = quizPairs.length; quizSelDe = null; quizSelEn = null;
+  const deList = [...quizPairs].sort(()=>Math.random()-0.5);
+  const enList = [...quizPairs].sort(()=>Math.random()-0.5);
+  document.getElementById('quizDe').innerHTML = deList.map(c=>`<button data-id="${c.id}" data-side="de">${escapeHtml(c.word)}</button>`).join('');
+  document.getElementById('quizEn').innerHTML = enList.map(c=>`<button data-id="${c.id}" data-side="en">${escapeHtml(c.translation)}</button>`).join('');
+  document.getElementById('quizScore').textContent = quizTotal ? `0 / ${quizTotal} matched` : 'No translated words in this group to quiz — continuing.';
+  if(quizTotal===0){ setTimeout(finishGroup, 800); return; }
+  document.querySelectorAll('#quizDe button, #quizEn button').forEach(btn=>btn.addEventListener('click', onQuizClick));
+}
+function onQuizClick(e){
+  const btn = e.currentTarget;
+  if(btn.classList.contains('correct')) return;
+  if(btn.dataset.side==='de'){
+    document.querySelectorAll('#quizDe button').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected'); quizSelDe = btn;
+  } else {
+    document.querySelectorAll('#quizEn button').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected'); quizSelEn = btn;
+  }
+  if(quizSelDe && quizSelEn){
+    if(quizSelDe.dataset.id === quizSelEn.dataset.id){
+      quizSelDe.classList.add('correct'); quizSelEn.classList.add('correct');
+      quizSelDe.classList.remove('selected'); quizSelEn.classList.remove('selected');
+      quizCorrect++;
+      document.getElementById('quizScore').textContent = `${quizCorrect} / ${quizTotal} matched`;
+      quizSelDe=null; quizSelEn=null;
+      if(quizCorrect===quizTotal){ document.getElementById('nextGroupBtn').style.display='inline-block'; }
+    } else {
+      quizSelDe.classList.add('wrong'); quizSelEn.classList.add('wrong');
+      setTimeout(()=>{
+        quizSelDe.classList.remove('wrong','selected'); quizSelEn.classList.remove('wrong','selected');
+        quizSelDe=null; quizSelEn=null;
+      }, 500);
+    }
+  }
+}
+document.getElementById('nextGroupBtn').addEventListener('click', finishGroup);
+document.getElementById('skipQuizBtn').addEventListener('click', finishGroup);
+function finishGroup(){
+  groupIdx++;
+  if(groupIdx >= groups.length){
+    document.getElementById('quizPhase').style.display='none';
+    document.getElementById('flashPhase').style.display='none';
+    document.getElementById('sessionDone').style.display='block';
+  } else {
+    startGroup();
+  }
+}
+
+// ---------- full card editor (table + study) ----------
+function openEditModal(id){
+  const c = cards.find(x => x.id === id);
+  if(!c) return;
+  document.getElementById('editId').value = c.id;
+  document.getElementById('editWord').value = c.word || '';
+  document.getElementById('editTranslation').value = c.translation || '';
+  const lvlSel = document.getElementById('editLevel');
+  lvlSel.innerHTML = LEVELS.map(lv => `<option value="${lv}" ${(c.level||'?')===lv?'selected':''}>${LEVEL_LABELS[lv]}</option>`).join('');
+  document.getElementById('editMastered').value = c.mastered ? '1' : '0';
+  document.getElementById('editLine').value = c.line || '';
+  document.getElementById('editLineEn').value = c.lineTranslation || '';
+  document.getElementById('editShow').value = c.show || '';
+  document.getElementById('editSong').value = c.song || '';
+  document.getElementById('editNote').value = c.note || '';
+  document.getElementById('editExcluded').checked = !!c.excluded;
+  const modal = document.getElementById('editModal');
+  if(!modal){ console.error('editModal missing'); return; }
+  modal.style.display = 'flex';
+}
+function closeEditModal(){
+  document.getElementById('editModal').style.display = 'none';
+}
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    const m = document.getElementById('editModal');
+    if(m && m.style.display === 'flex') closeEditModal();
+  }
+});
+
+document.getElementById('editCancelBtn').addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeEditModal(); });
+document.getElementById('editModal').addEventListener('click', (e)=>{
+  if(e.target.id === 'editModal') closeEditModal();
+});
+document.getElementById('editSaveBtn').addEventListener('click', (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  const id = document.getElementById('editId').value;
+  const c = cards.find(x => x.id === id);
+  if(!c){ closeEditModal(); return; }
+  const w = document.getElementById('editWord').value.trim();
+  if(w) c.word = w;
+  c.translation = document.getElementById('editTranslation').value.trim();
+  c.level = document.getElementById('editLevel').value || c.level || '?';
+  c.mastered = document.getElementById('editMastered').value === '1';
+  c.line = document.getElementById('editLine').value.trim();
+  const lineEnEl = document.getElementById('editLineEn');
+  if(lineEnEl) c.lineTranslation = lineEnEl.value.trim();
+  c.show = document.getElementById('editShow').value.trim();
+  c.song = document.getElementById('editSong').value.trim();
+  c.note = document.getElementById('editNote').value.trim();
+  c.excluded = document.getElementById('editExcluded').checked;
+  persistCards();
+  closeEditModal();
+  renderAll();
+  // refresh flashcard if studying this card
+  const sess = document.getElementById('studySession');
+  if(sess && sess.style.display !== 'none' && typeof showFlashcard === 'function'){
+    try{ showFlashcard(); }catch(err){ console.warn(err); }
+  }
+});
+document.getElementById('editDeleteBtn').addEventListener('click', ()=>{
+  const id = document.getElementById('editId').value;
+  if(!confirm('Delete this card?')) return;
+  cards = cards.filter(c => c.id !== id);
+  persistCards();
+  closeEditModal();
+  // remove from current study queue if present
+  flashQueue = flashQueue.filter(x => x !== id);
+  renderAll();
+  if(document.getElementById('studySession').style.display !== 'none'){
+    try{ showFlashcard(); }catch(e){}
+  }
+});
+document.getElementById('editFlashBtn').addEventListener('click', (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  const c = currentFlashCard();
+  if(c) openEditModal(c.id);
+});
+
+
+// ---------- check words / translate lines / Gemini AI review ----------
+const GEMINI_KEY_STORAGE = 'buehnenworter:geminiKey';
+(function initGeminiKey(){
+  const el = document.getElementById('geminiKey');
+  if(!el) return;
+  try{ el.value = localStorage.getItem(GEMINI_KEY_STORAGE) || ''; }catch(e){}
+  el.addEventListener('change', ()=>{
+    try{ localStorage.setItem(GEMINI_KEY_STORAGE, el.value.trim()); }catch(e){}
+  });
+})();
+
+function normalizeGloss(s){
+  return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+function glossesOverlap(a, b){
+  const na = normalizeGloss(a), nb = normalizeGloss(b);
+  if(!na || !nb) return false;
+  if(na === nb) return true;
+  if(na.includes(nb) || nb.includes(na)) return true;
+  const wa = new Set(na.split(' ').filter(w=>w.length>2));
+  const wb = nb.split(' ').filter(w=>w.length>2);
+  return wb.some(w => wa.has(w));
+}
+
+document.getElementById('checkWordsBtn').addEventListener('click', ()=>{
+  const report = document.getElementById('checkReport');
+  const msg = document.getElementById('aiMsg');
+  const issues = [];
+  let fixed = 0, ok = 0;
+  cards.forEach(c => {
+    if(c.excluded) return;
+    const hit = lookupDict(c.word);
+    if(!c.translation || isMetaGloss(c.translation)){
+      if(hit && hit.en && !isMetaGloss(hit.en)){
+        c.translation = hit.en; fixed++;
+        issues.push({type:'fixed', word:c.word, was:'(empty/bad)', now:hit.en});
+      } else {
+        issues.push({type:'missing', word:c.word, was:c.translation||'(none)', now:''});
+      }
+      return;
+    }
+    if(hit && hit.en && !isMetaGloss(hit.en) && !glossesOverlap(c.translation, hit.en)){
+      // auto-apply dictionary suggestion
+      const was = c.translation;
+      c.translation = hit.en;
+      fixed++;
+      issues.push({type:'fixed', word:c.word, was:was, now:hit.en});
+    } else {
+      ok++;
+    }
+  });
+  persistCards(); renderAll();
+  msg.style.color = 'var(--ink-soft)';
+  msg.textContent = `Checked · ${ok} ok · ${fixed} auto-fixed · ${issues.filter(i=>i.type==='missing').length} still missing`;
+  if(issues.length){
+    report.style.display = 'block';
+    report.innerHTML = issues.slice(0, 80).map(i => {
+      if(i.type === 'fixed') return `<div style="margin:4px 0; color:var(--good);"><strong>${escapeHtml(i.word)}</strong>: “${escapeHtml(i.was)}” → “${escapeHtml(i.now)}”</div>`;
+      return `<div style="margin:4px 0; color:var(--bad);"><strong>${escapeHtml(i.word)}</strong> still missing translation</div>`;
+    }).join('') + (issues.length > 80 ? `<div class="subtle">…and ${issues.length-80} more</div>` : '');
+  } else {
+    report.style.display = 'none';
+  }
+});
+
+async function translateLineFree(de){
+  // MyMemory free endpoint
+  const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(de) + '&langpair=de|en';
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const data = await res.json();
+  const t = (data.responseData && data.responseData.translatedText) || '';
+  if(/MYMEMORY WARNING|QUERY LENGTH|INVALID/i.test(t)) throw new Error(t.slice(0, 80));
+  return t.trim();
+}
+
+document.getElementById('translateLinesBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('translateLinesBtn');
+  const msg = document.getElementById('aiMsg');
+  const todo = cards.filter(c => !c.excluded && c.line && !(c.lineTranslation && c.lineTranslation.trim()));
+  // unique lines
+  const byLine = new Map();
+  todo.forEach(c => {
+    const k = c.line.trim();
+    if(!byLine.has(k)) byLine.set(k, []);
+    byLine.get(k).push(c);
+  });
+  const lines = [...byLine.keys()];
+  if(!lines.length){ msg.textContent = 'All example lines already have English (or no lines).'; return; }
+  btn.disabled = true;
+  let done = 0, ok = 0, fail = 0;
+  for(const line of lines){
+    msg.textContent = `Translating lines… ${done+1}/${lines.length}`;
+    try{
+      const en = await translateLineFree(line);
+      byLine.get(line).forEach(c => { c.lineTranslation = en; });
+      ok++;
+    }catch(e){
+      fail++;
+      console.warn('line translate', line, e);
+    }
+    done++;
+    persistCards();
+    await new Promise(r => setTimeout(r, 350));
+  }
+  renderAll();
+  btn.disabled = false;
+  msg.style.color = fail ? 'var(--ink-soft)' : 'var(--good)';
+  msg.textContent = `Line translations: ${ok} ok, ${fail} failed (free API limits). Open a card to edit any bad ones.`;
+});
+
+async function geminiGenerate(prompt, key){
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key);
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      contents:[{ parts:[{ text: prompt }] }],
+      generationConfig:{ temperature: 0.2, maxOutputTokens: 4096 }
+    })
+  });
+  if(!res.ok){
+    const t = await res.text().catch(()=> '');
+    throw new Error('Gemini HTTP '+res.status+' '+t.slice(0,180));
+  }
+  const data = await res.json();
+  const textOut = (((data.candidates||[])[0]||{}).content||{}).parts;
+  const joined = (textOut||[]).map(p=>p.text||'').join('');
+  return joined.trim();
+}
+
+document.getElementById('aiReviewBtn').addEventListener('click', async ()=>{
+  const key = (document.getElementById('geminiKey').value || '').trim();
+  const msg = document.getElementById('aiMsg');
+  const report = document.getElementById('checkReport');
+  if(!key){
+    msg.style.color = 'var(--bad)';
+    msg.textContent = 'Paste a free Gemini API key first (aistudio.google.com/apikey).';
+    return;
+  }
+  try{ localStorage.setItem(GEMINI_KEY_STORAGE, key); }catch(e){}
+  const btn = document.getElementById('aiReviewBtn');
+  btn.disabled = true;
+  // batch cards that need work or sample of all non-excluded
+  const pool = cards.filter(c => !c.excluded);
+  if(!pool.length){ msg.textContent = 'No cards to review.'; btn.disabled=false; return; }
+  const batchSize = 12;
+  let updated = 0, batches = 0;
+  const notes = [];
+  for(let i=0;i<pool.length;i+=batchSize){
+    const batch = pool.slice(i, i+batchSize);
+    msg.style.color = 'var(--ink-soft)';
+    msg.textContent = `AI review… ${Math.min(i+batchSize, pool.length)}/${pool.length}`;
+    const payload = batch.map(c => ({
+      id: c.id,
+      word: c.word,
+      translation: c.translation || '',
+      line: c.line || '',
+      lineTranslation: c.lineTranslation || ''
+    }));
+    const prompt = `You are a careful German–English learning assistant for song lyrics.
+For each item, fix mistakes. Return ONLY a JSON array (no markdown) with objects:
+{"id":"...","word":"corrected German lemma if needed else same","translation":"short natural English gloss 1-6 words for the word","lineTranslation":"natural English for the full line if line is non-empty else empty","ok":true/false,"note":"brief note if something was wrong"}
+Rules:
+- translation must be a real meaning, NEVER grammar labels like "imperative of …"
+- keep the sense from the lyric line when possible
+- if the German word is a clear conjugation, still give the meaning of that form (e.g. will → want)
+- do not invent words; keep word close to input unless obvious typo
+Items:
+${JSON.stringify(payload)}`;
+    try{
+      let raw = await geminiGenerate(prompt, key);
+      raw = raw.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/i,'').trim();
+      const m = raw.match(/\[[\s\S]*\]/);
+      if(m) raw = m[0];
+      const results = JSON.parse(raw);
+      results.forEach(r => {
+        const card = cards.find(c => c.id === r.id);
+        if(!card) return;
+        if(r.word && String(r.word).trim()){
+          const nw = String(r.word).trim();
+          if(nw !== card.word){ card.word = nw; updated++; }
+        }
+        if(r.translation && String(r.translation).trim() && !isMetaGloss(r.translation)){
+          const nt = String(r.translation).trim();
+          if(nt !== (card.translation||'')){ card.translation = nt; updated++; }
+        }
+        if(r.lineTranslation && String(r.lineTranslation).trim()){
+          const nl = String(r.lineTranslation).trim();
+          if(nl !== (card.lineTranslation||'')){ card.lineTranslation = nl; updated++; }
+        }
+        // always ensure level
+        if(!card.level || card.level === '?') card.level = heuristicLevel(card.word, card.translation||'');
+        if(r.note) notes.push({word: card.word, note: r.note});
+      });
+      persistCards();
+    }catch(e){
+      console.error(e);
+      failures++;
+      msg.style.color = 'var(--bad)';
+      msg.textContent = 'AI batch failed: ' + (e.message||e) + ' — continuing…';
+    }
+    await new Promise(r => setTimeout(r, 400));
+  }
+  renderAll();
+  btn.disabled = false;
+  msg.style.color = failures ? 'var(--ink-soft)' : 'var(--good)';
+  msg.textContent = `AI review done · ${updated} fields updated · ${failures} batch error(s).`;
+  if(notes.length){
+    report.style.display = 'block';
+    report.innerHTML = notes.slice(0, 40).map(n =>
+      `<div style="margin:4px 0;"><strong>${escapeHtml(n.word)}</strong>: ${escapeHtml(n.note)}</div>`
+    ).join('');
+  }
+});
+
+
+loadCards();
+</script>
+
+</body>
+</html>
