@@ -4,8 +4,9 @@
 Designed for a MacBook: small requests, one song at a time, checkpoint after
 EVERY song, and safe to stop/restart. It also writes corrected LRC files.
 
-Example:
-  python3 tools/ai_process_musicals.py --musical Elisabeth --model qwen3:8b
+The Qwen3 model is explicitly run with thinking disabled. This is important:
+otherwise Qwen3 may spend a very long time producing internal reasoning for
+every lyric batch.
 """
 from __future__ import annotations
 import argparse, json, re, sys, time, urllib.request
@@ -37,7 +38,7 @@ def parse_lrc(path: Path):
             frac = t.group(3) or '0'
             sec = int(t.group(1))*60 + int(t.group(2)) + int(frac.ljust(3,'0'))/1000
             rows.append({'time': round(sec,3), 'text': text})
-    rows.sort(key=lambda x: x['time'])
+    rows.sort(key=lambda x:x['time'])
     for i, r in enumerate(rows):
         r['endTime'] = rows[i+1]['time'] if i+1 < len(rows) else round(r['time']+4.5,3)
     return rows
@@ -50,20 +51,17 @@ def pair_audio(lrc: Path):
     return None
 
 
-def call_ollama(model: str, prompt: str, timeout: int = 600, retries: int = 2):
-    """Call local Ollama, allowing slow first-loads on a MacBook.
-
-    Qwen3 8B can take several minutes to load the first time. The old 30-second
-    health check caused false failures even though Ollama itself was working.
-    """
+def call_ollama(model: str, prompt: str, timeout: int = 180, retries: int = 0):
+    """Call Ollama without Qwen3's long thinking mode."""
     payload = {
         'model': model,
         'messages': [
-            {'role':'system','content':'You are a careful German language editor for a vocabulary-learning app. Return ONLY valid JSON. Never use markdown.'},
+            {'role':'system','content':'You are a careful German language editor for a vocabulary-learning app. Return ONLY valid JSON. Never use markdown. Do not explain your reasoning.'},
             {'role':'user','content':prompt}
         ],
         'stream': False,
-        'options': {'temperature': 0.05, 'num_ctx': 4096}
+        'think': False,
+        'options': {'temperature': 0.05, 'num_ctx': 4096, 'num_predict': 2048}
     }
     last_error = None
     for attempt in range(retries + 1):
@@ -94,13 +92,13 @@ def review_lines(model, musical, song, lines, batch_size):
     for base in range(0, len(lines), batch_size):
         chunk = lines[base:base+batch_size]
         numbered = [{'i': base+i, 'time': x['time'], 'text': x['text']} for i,x in enumerate(chunk)]
-        prompt = f'''Musical: {musical}\nSong: {song}\n\nReview these German LRC lyric lines.\nReturn exactly: {{"lines":[{{"i":0,"corrected":"...","english":"..."}}]}}\n\nRules:\n- Keep the timestamp index i exactly; timestamps are handled by the program.\n- Correct only clear spelling/transcription/OCR mistakes. Do NOT rewrite valid lyrics into different wording.\n- If a line is already correct, copy it unchanged.\n- Translate the ENTIRE corrected line into natural English.\n- Do not omit lines.\n\nLines:\n{json.dumps(numbered, ensure_ascii=False)}'''
+        prompt = f'''Musical: {musical}\nSong: {song}\n\nReview these German LRC lyric lines.\nReturn exactly: {{"lines":[{{"i":0,"corrected":"...","english":"..."}}]}}\n\nRules:\n- Keep the timestamp index i exactly; timestamps are handled by the program.\n- Correct only clear spelling/transcription/OCR mistakes. Do NOT rewrite valid lyrics into different wording.\n- If a line is already correct, copy it unchanged.\n- Translate the ENTIRE corrected line into natural English.\n- Do not omit lines.\n- Do not provide reasoning or commentary.\n\nLines:\n{json.dumps(numbered, ensure_ascii=False)}'''
         ans = call_ollama(model, prompt)
         got = {int(x['i']): x for x in ans.get('lines',[]) if isinstance(x,dict) and str(x.get('i','')).isdigit()}
         for idx, x in enumerate(chunk, start=base):
             a = got.get(idx, {})
             cleaned.append({'index':idx,'time':x['time'],'endTime':x['endTime'],'text':str(a.get('corrected') or x['text']).strip(),'english':str(a.get('english') or '').strip()})
-        print(f'    lyrics: {min(base+batch_size,len(lines))}/{len(lines)} lines')
+        print(f'    lyrics: {min(base+batch_size,len(lines))}/{len(lines)} lines', flush=True)
     return cleaned
 
 
@@ -118,7 +116,7 @@ def extract_vocab(model, musical, song, cleaned, batch_size):
     vocab = []
     for base in range(0, len(candidates), batch_size):
         batch = candidates[base:base+batch_size]
-        prompt = f'''Create learner vocabulary from these candidates from the German musical {musical}, song {song}.\nReturn exactly: {{"words":[{{"surface":"geht","lemma":"gehen","english":"to go","cefr":"A1","line_index":0}}]}}\n\nRules:\n- Only include useful German vocabulary a learner would reasonably study.\n- Exclude names, places, titles, stage directions, sound effects, interjections, filler, and grammatical noise.\n- Normalize inflected forms to the dictionary lemma where appropriate (ging -> gehen, Kindern -> Kind).\n- Keep compounds when they are meaningful vocabulary; do not split them into nonsense pieces.\n- English must be a concise, natural flashcard meaning in context.\n- CEFR must be A1/A2/B1/B2/C1/C2 based on real learner difficulty and commonness, NOT word length.\n- Common everyday words should generally be A1/A2; literary, idiomatic, rare or abstract words can be B2/C1/C2.\n- Do not force everything into B1.\n- Return only words that actually occur in the supplied lines.\n\nCandidates:\n{json.dumps(batch, ensure_ascii=False)}'''
+        prompt = f'''Create learner vocabulary from these candidates from the German musical {musical}, song {song}.\nReturn exactly: {{"words":[{{"surface":"geht","lemma":"gehen","english":"to go","cefr":"A1","line_index":0}}]}}\n\nRules:\n- Only include useful German vocabulary a learner would reasonably study.\n- Exclude names, places, titles, stage directions, sound effects, interjections, filler, and grammatical noise.\n- Normalize inflected forms to the dictionary lemma where appropriate (ging -> gehen, Kindern -> Kind).\n- Keep compounds when they are meaningful vocabulary; do not split them into nonsense pieces.\n- English must be a concise, natural flashcard meaning in context.\n- CEFR must be A1/A2/B1/B2/C1/C2 based on real learner difficulty and commonness, NOT word length.\n- Common everyday words should generally be A1/A2; literary, idiomatic, rare or abstract words can be B2/C1/C2.\n- Do not force everything into B1.\n- Return only words that actually occur in the supplied lines.\n- Do not provide reasoning or commentary.\n\nCandidates:\n{json.dumps(batch, ensure_ascii=False)}'''
         ans = call_ollama(model, prompt)
         for w in ans.get('words',[]) if isinstance(ans.get('words',[]),list) else []:
             if not isinstance(w,dict):
@@ -133,7 +131,7 @@ def extract_vocab(model, musical, song, cleaned, batch_size):
             if li >= len(cleaned):
                 continue
             vocab.append({'word':lemma,'translation':english,'level':level,'line':cleaned[li]['text'],'lineTranslation':cleaned[li]['english'],'line_index':li})
-        print(f'    vocab: {min(base+batch_size,len(candidates))}/{len(candidates)} candidates')
+        print(f'    vocab: {min(base+batch_size,len(candidates))}/{len(candidates)} candidates', flush=True)
     return vocab
 
 
@@ -167,7 +165,7 @@ def main():
     ap.add_argument('--song', help='Only process one song (filename or title).')
     ap.add_argument('--line-batch', type=int, default=12)
     ap.add_argument('--word-batch', type=int, default=35)
-    ap.add_argument('--pause', type=float, default=0.5)
+    ap.add_argument('--pause', type=float, default=0.2)
     args = ap.parse_args()
 
     music = Path(args.music_dir)
@@ -176,11 +174,11 @@ def main():
     if not music.exists():
         raise SystemExit(f'Music directory not found: {music}')
 
-    print(f'Checking Ollama (up to 10 minutes for a slow first model load)...')
+    print('Checking Ollama/model (first load can take a few minutes)...', flush=True)
     try:
-        call_ollama(args.model, 'Reply with {"ok":true}', timeout=600, retries=2)
+        call_ollama(args.model, 'Return exactly {"ok":true}', timeout=180, retries=0)
     except Exception as e:
-        print(f'Ollama is not reachable after retries: {e}', file=sys.stderr)
+        print(f'Ollama is not reachable: {e}', file=sys.stderr)
         raise SystemExit(1)
 
     dirs = [p for p in music.iterdir() if p.is_dir()]
@@ -213,7 +211,7 @@ def main():
                 print(f'[{md.name}] SKIP already reviewed: {lp.name}')
                 continue
 
-            print(f'[{md.name}] REVIEW: {lp.name}')
+            print(f'[{md.name}] REVIEW: {lp.name}', flush=True)
             original=parse_lrc(lp)
             cleaned=review_lines(args.model, md.name, title(lp), original, args.line_batch)
             vocab=extract_vocab(args.model, md.name, title(lp), cleaned, args.word_batch)
@@ -246,7 +244,7 @@ def main():
             payload['cards']=list(cards.values())
             payload['version']=time.strftime('%Y%m%d-%H%M%S')
             outpath.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
-            print(f'    SAVED: {len(vocab)} words from this song; {len(cards)} total cards in {outpath}')
+            print(f'    SAVED: {len(vocab)} words from this song; {len(cards)} total cards in {outpath}', flush=True)
             time.sleep(args.pause)
 
     print('DONE. Results are in data/ai-reviewed/ and corrected LRC files are in data/ai-reviewed/lrc/.')
