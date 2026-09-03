@@ -4,9 +4,8 @@
 Designed for a MacBook: small requests, one song at a time, checkpoint after
 EVERY song, and safe to stop/restart. It also writes corrected LRC files.
 
-The Qwen3 model is explicitly run with thinking disabled. This is important:
-otherwise Qwen3 may spend a very long time producing internal reasoning for
-every lyric batch.
+Qwen3 is explicitly run with thinking disabled so it does not spend a long
+time producing reasoning for every lyric batch.
 """
 from __future__ import annotations
 import argparse, json, re, sys, time, urllib.request
@@ -52,7 +51,6 @@ def pair_audio(lrc: Path):
 
 
 def call_ollama(model: str, prompt: str, timeout: int = 180, retries: int = 0):
-    """Call Ollama without Qwen3's long thinking mode."""
     payload = {
         'model': model,
         'messages': [
@@ -61,7 +59,7 @@ def call_ollama(model: str, prompt: str, timeout: int = 180, retries: int = 0):
         ],
         'stream': False,
         'think': False,
-        'options': {'temperature': 0.05, 'num_ctx': 4096, 'num_predict': 2048}
+        'options': {'temperature': 0.05, 'num_ctx': 4096, 'num_predict': 1024}
     }
     last_error = None
     for attempt in range(retries + 1):
@@ -114,8 +112,11 @@ def extract_vocab(model, musical, song, cleaned, batch_size):
             candidates.append({'surface':tok,'line_index':i})
 
     vocab = []
-    for base in range(0, len(candidates), batch_size):
+    total = len(candidates)
+    print(f'    vocabulary: starting {total} candidates...', flush=True)
+    for base in range(0, total, batch_size):
         batch = candidates[base:base+batch_size]
+        print(f'    vocabulary: asking Ollama for {base+1}-{min(base+len(batch), total)} of {total}...', flush=True)
         prompt = f'''Create learner vocabulary from these candidates from the German musical {musical}, song {song}.\nReturn exactly: {{"words":[{{"surface":"geht","lemma":"gehen","english":"to go","cefr":"A1","line_index":0}}]}}\n\nRules:\n- Only include useful German vocabulary a learner would reasonably study.\n- Exclude names, places, titles, stage directions, sound effects, interjections, filler, and grammatical noise.\n- Normalize inflected forms to the dictionary lemma where appropriate (ging -> gehen, Kindern -> Kind).\n- Keep compounds when they are meaningful vocabulary; do not split them into nonsense pieces.\n- English must be a concise, natural flashcard meaning in context.\n- CEFR must be A1/A2/B1/B2/C1/C2 based on real learner difficulty and commonness, NOT word length.\n- Common everyday words should generally be A1/A2; literary, idiomatic, rare or abstract words can be B2/C1/C2.\n- Do not force everything into B1.\n- Return only words that actually occur in the supplied lines.\n- Do not provide reasoning or commentary.\n\nCandidates:\n{json.dumps(batch, ensure_ascii=False)}'''
         ans = call_ollama(model, prompt)
         for w in ans.get('words',[]) if isinstance(ans.get('words',[]),list) else []:
@@ -131,7 +132,7 @@ def extract_vocab(model, musical, song, cleaned, batch_size):
             if li >= len(cleaned):
                 continue
             vocab.append({'word':lemma,'translation':english,'level':level,'line':cleaned[li]['text'],'lineTranslation':cleaned[li]['english'],'line_index':li})
-        print(f'    vocab: {min(base+batch_size,len(candidates))}/{len(candidates)} candidates', flush=True)
+        print(f'    vocab: {min(base+batch_size,total)}/{total} candidates', flush=True)
     return vocab
 
 
@@ -164,7 +165,7 @@ def main():
     ap.add_argument('--musical', help='Only process this Musical folder; recommended.')
     ap.add_argument('--song', help='Only process one song (filename or title).')
     ap.add_argument('--line-batch', type=int, default=12)
-    ap.add_argument('--word-batch', type=int, default=35)
+    ap.add_argument('--word-batch', type=int, default=15)
     ap.add_argument('--pause', type=float, default=0.2)
     args = ap.parse_args()
 
