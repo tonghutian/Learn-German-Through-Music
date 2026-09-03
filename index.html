@@ -130,7 +130,6 @@
 
   <nav class="tabs">
     <button data-tab="library" class="active">Library</button>
-    <button data-tab="import">Import</button>
     <button data-tab="table">All Words</button>
     <button data-tab="study">Study</button>
   </nav>
@@ -139,7 +138,7 @@
   <!-- ============ BUILT-IN LIBRARY TAB ============ -->
   <section class="panel" id="view-library">
     <h2 class="section-title">Built-in German Musicals</h2>
-    <p class="subtle">Premade content is loaded from this website's public catalog. Your learning progress stays on your computer.</p>
+    <p class="subtle">Choose a Musical from the library. Your learning progress and personal edits stay on your computer.</p>
     <div class="toolbar">
       <span id="catalogStatus" class="msg">Checking for the latest catalog…</span>
       <button class="btn ghost small" id="syncCatalogBtn" type="button">Sync latest content</button>
@@ -147,7 +146,7 @@
     <div id="catalogVersion" class="hint" style="margin-bottom:14px;"></div>
     <div id="libraryList"></div>
     <div class="notice" style="margin-top:18px;">
-      <b>For site owners:</b> edit <code>data/catalog.json</code> in the GitHub repository. When you publish a new catalog version, users automatically receive the updated word meanings, English sentence translations, CEFR levels, and song metadata on their next visit.
+      Built-in songs are published by the site owner. Your study progress and personal edits stay in this browser.
     </div>
   </section>
 
@@ -1366,7 +1365,7 @@ function showFlashcard(){
   document.getElementById('backLine').textContent = c.line ? '"'+c.line+'"' : (c.note||'');
   document.getElementById('backLineEn').textContent = c.lineTranslation ? '"'+c.lineTranslation+'"' : '';
   document.getElementById('backSong').textContent = c.song ? '— from "'+c.song+'"' : '';
-  const hasAudio = !!findAudioForSong(c.song) && c.startTime!=null;
+  const hasAudio = !!(c.audioUrl || findAudioForSong(c.song)) && c.startTime!=null;
   playFront.style.display = hasAudio?'inline-block':'none';
   playBack.style.display = hasAudio?'inline-block':'none';
   playFront.onclick = ()=>playSnippet(c); playBack.onclick = ()=>playSnippet(c);
@@ -1698,7 +1697,8 @@ async function loadBuiltInSong(song){
     lines.sort((a,b)=>(a.time??0)-(b.time??0));
     lines.forEach((l,i)=>{if(l.time!==null){const next=lines.slice(i+1).find(x=>x.time!==null);l.endTime=next?next.time:l.time+4.5;}});
     lrcLines=lines.map(l=>({...l,audioUrl:song.audio?catalogAudioBase(song.audio):''}));
-    document.querySelector('[data-tab="import"]').click();
+    const studyTab=document.querySelector('[data-tab="study"]');
+    if(studyTab) studyTab.click();
     renderLrcLines();
     document.getElementById('showInput').value=song.musical||'';
     document.getElementById('mp3Status').textContent='Built-in audio ready ✓';
