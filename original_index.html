@@ -107,17 +107,7 @@
   .quiz-col button.wrong{ background:#f6dbdf; border-color:var(--bad); animation:shake .3s; }
   @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
   .quiz-score{ text-align:center; font-size:14px; margin-top:16px; color:var(--ink-soft); }
-
-  .music-link-note{
-    margin:18px 0 0; padding:16px 20px; text-align:center;
-    color:#f3ead9; font-size:14px; line-height:1.6;
-    border:1px solid rgba(224,188,108,0.45); border-radius:6px;
-    background:rgba(51,13,22,0.72);
-  }
-  .music-link-note a{ color:#e0bc6c; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
-  .music-link-note a:hover{ color:#f0cf8a; }
 </style>
-<!-- Built-in catalog: place data/catalog.json and public-domain media under the repository. -->
 </head>
 <body>
 <div class="stage-lights"></div>
@@ -129,30 +119,13 @@
   </header>
 
   <nav class="tabs">
-    <button data-tab="library" class="active">Library</button>
-    <button data-tab="import">Import</button>
+    <button data-tab="import" class="active">Import</button>
     <button data-tab="table">All Words</button>
     <button data-tab="study">Study</button>
   </nav>
 
-
-  <!-- ============ BUILT-IN LIBRARY TAB ============ -->
-  <section class="panel" id="view-library">
-    <h2 class="section-title">Built-in German Musicals</h2>
-    <p class="subtle">Premade content is loaded from this website's public catalog. Your learning progress stays on your computer.</p>
-    <div class="toolbar">
-      <span id="catalogStatus" class="msg">Checking for the latest catalog…</span>
-      <button class="btn ghost small" id="syncCatalogBtn" type="button">Sync latest content</button>
-    </div>
-    <div id="catalogVersion" class="hint" style="margin-bottom:14px;"></div>
-    <div id="libraryList"></div>
-    <div class="notice" style="margin-top:18px;">
-      <b>For site owners:</b> edit <code>data/catalog.json</code> in the GitHub repository. When you publish a new catalog version, users automatically receive the updated word meanings, English sentence translations, CEFR levels, and song metadata on their next visit.
-    </div>
-  </section>
-
   <!-- ============ IMPORT TAB ============ -->
-  <section class="panel" id="view-import" style="display:none;">
+  <section class="panel" id="view-import">
     <h2 class="section-title">Import lyrics &amp; audio</h2>
 
     <div class="row2">
@@ -228,11 +201,16 @@
 
     <div class="divider"></div>
     <details open>
-      <summary style="cursor:pointer; font-size:14px; font-weight:600; color:var(--ink);">Free dictionary &amp; translation tools</summary>
-      <p class="subtle" style="margin:8px 0 10px;">No Anthropic, no paid API. The site uses the built-in dictionary plus free public dictionary/translation services for missing entries.</p>
+      <summary style="cursor:pointer; font-size:14px; font-weight:600; color:var(--ink);">Check &amp; improve (lines + translations)</summary>
+      <p class="subtle" style="margin:8px 0 10px;">Dictionary check is free. Line translation uses a free public API. Optional Gemini key (free from Google) gives stronger AI review of words and full lines.</p>
+      <div class="field">
+        <label>Gemini API key (optional — free at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>)</label>
+        <input type="password" id="geminiKey" placeholder="paste key — stored only in this browser" autocomplete="off">
+      </div>
       <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">
         <button class="btn ghost" id="checkWordsBtn" type="button">Check word translations</button>
         <button class="btn ghost" id="translateLinesBtn" type="button">Translate example lines</button>
+        <button class="btn" id="aiReviewBtn" type="button">AI review (Gemini)</button>
       </div>
       <div><span id="aiMsg" class="msg"></span></div>
       <div id="checkReport" style="display:none; margin-top:10px; max-height:220px; overflow-y:auto; font-size:12.5px; border:1px dashed #b8a578; border-radius:6px; padding:10px; background:#fffdf6;"></div>
@@ -340,8 +318,6 @@
       </div>
     </div>
   </section>
-
-  <p class="music-link-note">Want to use your own files privately? <a href="https://tonghutian.github.io/german/" target="_blank" rel="noopener noreferrer">Upload your own German lyrics &amp; audio here</a>.</p>
 </div>
 
 <!-- Full card editor modal -->
@@ -641,7 +617,7 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    ['library','import','table','study'].forEach(t=>{ const el=document.getElementById('view-'+t); if(el) el.style.display = (t===btn.dataset.tab)?'block':'none'; });
+    ['import','table','study'].forEach(t=>{ document.getElementById('view-'+t).style.display = (t===btn.dataset.tab)?'block':'none'; });
     stopAllAudio();
     if(btn.dataset.tab==='table') renderAll();
     if(btn.dataset.tab==='study') renderStudySetup();
@@ -693,7 +669,7 @@ function renderLrcLines(){
       const l = lrcLines[el.dataset.i];
       document.getElementById('lyricInput').value = l.text;
       document.getElementById('songInput').value = l.song;
-      currentLineMeta = { song:l.song, time:l.time, endTime:l.endTime, audioUrl:l.audioUrl||'' };
+      currentLineMeta = { song:l.song, time:l.time, endTime:l.endTime };
       document.getElementById('tokenizeBtn').click();
     });
   });
@@ -720,36 +696,17 @@ function findAudioForSong(song){
   const match = Object.keys(audioMap).find(k=>k.includes(key)||key.includes(k));
   return match ? audioMap[match] : null;
 }
-function stopAllAudio(){
-  Object.values(audioMap).forEach(a=>{ try{ a.el.pause(); a.el.currentTime=0; }catch(e){} });
-  if(window.remoteAudioEl){ try{ window.remoteAudioEl.pause(); window.remoteAudioEl.currentTime=0; }catch(e){} }
-}
-async function playSnippet(card){
-  if(!card || card.startTime==null) return;
-  await stopAllAudio();
-  let el = null;
-  if(card.audioUrl){
-    if(!window.remoteAudioEl || window.remoteAudioEl.src !== new URL(card.audioUrl, document.baseURI).href){
-      window.remoteAudioEl = new Audio(new URL(card.audioUrl, document.baseURI).href);
-      window.remoteAudioEl.preload = 'auto';
-    }
-    el = window.remoteAudioEl;
-  } else {
-    const audio = findAudioForSong(card.song);
-    if(!audio) return;
-    el = audio.el;
-  }
-  const start = Number(card.startTime);
-  const stopAt = Number(card.endTime ?? (start + 4.5));
-  el.currentTime = start;
-  const onTime = ()=>{
-    if(el.currentTime >= stopAt){
-      el.pause();
-      el.removeEventListener('timeupdate', onTime);
-    }
-  };
+function stopAllAudio(){ Object.values(audioMap).forEach(a=>{ try{ a.el.pause(); }catch(e){} }); }
+function playSnippet(card){
+  const audio = findAudioForSong(card.song);
+  if(!audio || card.startTime==null) return;
+  stopAllAudio();
+  const el = audio.el;
+  el.currentTime = card.startTime;
+  const stopAt = card.endTime ?? (card.startTime + 4.5);
+  const onTime = ()=>{ if(el.currentTime >= stopAt){ el.pause(); el.removeEventListener('timeupdate', onTime); } };
   el.addEventListener('timeupdate', onTime);
-  try{ await el.play(); }catch(e){ console.warn('audio play failed', e); }
+  el.play().catch(()=>{});
 }
 
 // ---------- manual tokenizer ----------
@@ -802,7 +759,7 @@ document.getElementById('autoGenBtn').addEventListener('click', ()=>{
       word:entry.word, translation:dictHit?dictHit.en:'', lineTranslation:'',
       level:lvl, mastered:false, excluded:false,
       show:showName, song:entry.song, line:entry.line,
-      startTime:entry.startTime??null, endTime:entry.endTime??null, audioUrl:entry.audioUrl||'', note:'', created:Date.now()
+      startTime:entry.startTime??null, endTime:entry.endTime??null, note:'', created:Date.now()
     });
     added++;
   });
@@ -825,7 +782,7 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
     show: document.getElementById('showInput').value.trim(),
     song: document.getElementById('songInput').value.trim(),
     line: selectedToken || document.getElementById('lyricInput').value.trim(),
-    startTime: currentLineMeta?currentLineMeta.time:null, endTime: currentLineMeta?currentLineMeta.endTime:null, audioUrl: currentLineMeta?currentLineMeta.audioUrl:'',
+    startTime: currentLineMeta?currentLineMeta.time:null, endTime: currentLineMeta?currentLineMeta.endTime:null,
     note: document.getElementById('noteInput').value.trim(), created: Date.now()
   });
   persistCards();
@@ -1527,196 +1484,225 @@ document.getElementById('editFlashBtn').addEventListener('click', (e)=>{
 });
 
 
-// ---------- free-only checks + GitHub Pages catalog sync ----------
+// ---------- check words / translate lines / Gemini AI review ----------
+const GEMINI_KEY_STORAGE = 'buehnenworter:geminiKey';
+(function initGeminiKey(){
+  const el = document.getElementById('geminiKey');
+  if(!el) return;
+  try{ el.value = localStorage.getItem(GEMINI_KEY_STORAGE) || ''; }catch(e){}
+  el.addEventListener('change', ()=>{
+    try{ localStorage.setItem(GEMINI_KEY_STORAGE, el.value.trim()); }catch(e){}
+  });
+})();
+
 function normalizeGloss(s){
   return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
 }
-function glossesOverlap(a,b){
-  const na=normalizeGloss(a), nb=normalizeGloss(b);
+function glossesOverlap(a, b){
+  const na = normalizeGloss(a), nb = normalizeGloss(b);
   if(!na || !nb) return false;
-  if(na===nb || na.includes(nb) || nb.includes(na)) return true;
-  const wa=new Set(na.split(' ').filter(w=>w.length>2));
-  return nb.split(' ').filter(w=>w.length>2).some(w=>wa.has(w));
+  if(na === nb) return true;
+  if(na.includes(nb) || nb.includes(na)) return true;
+  const wa = new Set(na.split(' ').filter(w=>w.length>2));
+  const wb = nb.split(' ').filter(w=>w.length>2);
+  return wb.some(w => wa.has(w));
 }
-async function translateLineFree(de){
-  const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(de)+'&langpair=de|en';
-  const res=await fetch(url);
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  const data=await res.json();
-  const t=(data.responseData&&data.responseData.translatedText)||'';
-  if(/MYMEMORY WARNING|QUERY LENGTH|INVALID/i.test(t)) throw new Error(t.slice(0,80));
-  return t.trim();
-}
-document.getElementById('checkWordsBtn').addEventListener('click',()=>{
-  const report=document.getElementById('checkReport'), msg=document.getElementById('aiMsg');
-  const issues=[]; let fixed=0, ok=0;
-  cards.forEach(c=>{
+
+document.getElementById('checkWordsBtn').addEventListener('click', ()=>{
+  const report = document.getElementById('checkReport');
+  const msg = document.getElementById('aiMsg');
+  const issues = [];
+  let fixed = 0, ok = 0;
+  cards.forEach(c => {
     if(c.excluded) return;
-    const hit=lookupDict(c.word);
+    const hit = lookupDict(c.word);
     if(!c.translation || isMetaGloss(c.translation)){
-      if(hit && hit.en && !isMetaGloss(hit.en)){ c.translation=hit.en; fixed++; issues.push({word:c.word,was:'(empty)',now:hit.en,type:'fixed'}); }
-      else issues.push({word:c.word,type:'missing'});
-    } else if(hit && hit.en && !isMetaGloss(hit.en) && !glossesOverlap(c.translation,hit.en)){
-      const was=c.translation; c.translation=hit.en; fixed++; issues.push({word:c.word,was,now:hit.en,type:'fixed'});
-    } else ok++;
-  });
-  cards.forEach(c=>{if(!c.excluded && (!c.level||c.level==='?')) c.level=heuristicLevel(c.word,c.translation||'');});
-  persistCards(); renderAll();
-  msg.style.color='var(--ink-soft)';
-  msg.textContent=`Checked · ${ok} ok · ${fixed} fixed · ${issues.filter(i=>i.type==='missing').length} still missing`;
-  report.style.display=issues.length?'block':'none';
-  if(issues.length) report.innerHTML=issues.slice(0,80).map(i=>i.type==='fixed'
-    ? `<div style="margin:4px 0;color:var(--good);"><strong>${escapeHtml(i.word)}</strong>: “${escapeHtml(i.was)}” → “${escapeHtml(i.now)}”</div>`
-    : `<div style="margin:4px 0;color:var(--bad);"><strong>${escapeHtml(i.word)}</strong> still missing translation</div>`
-  ).join('');
-});
-document.getElementById('translateLinesBtn').addEventListener('click', async()=>{
-  const btn=document.getElementById('translateLinesBtn'), msg=document.getElementById('aiMsg');
-  const todo=cards.filter(c=>!c.excluded && c.line && !(c.lineTranslation||'').trim());
-  const byLine=new Map();
-  todo.forEach(c=>{ const k=c.line.trim(); if(!byLine.has(k)) byLine.set(k,[]); byLine.get(k).push(c); });
-  const lines=[...byLine.keys()];
-  if(!lines.length){msg.textContent='All example lines already have English translations.';return;}
-  btn.disabled=true; let ok=0,fail=0;
-  for(let i=0;i<lines.length;i++){
-    msg.textContent=`Translating lyric lines… ${i+1}/${lines.length}`;
-    try{
-      const en=await translateLineFree(lines[i]);
-      byLine.get(lines[i]).forEach(c=>c.lineTranslation=en);
-      ok++;
-    }catch(e){fail++; }
-    persistCards();
-    if(i%4===0) renderAll();
-    await new Promise(r=>setTimeout(r,250));
-  }
-  renderAll(); btn.disabled=false;
-  msg.textContent=`Line translations: ${ok} completed, ${fail} failed. You can edit any result manually.`;
-});
-
-// ---------- Built-in catalog ----------
-const CATALOG_URL = './data/catalog.json';
-let builtInCatalog = {version:'', updatedAt:'', musicals:[], cards:[]};
-
-function catalogAudioBase(url){
-  if(!url) return '';
-  return new URL(url, document.baseURI).href;
-}
-function applyCatalogToMemory(data){
-  if(!data || typeof data!=='object') throw new Error('Invalid catalog');
-  builtInCatalog=data;
-  const remoteCards=Array.isArray(data.cards)?data.cards:[];
-  const byId=new Map(cards.map(c=>[c.id,c]));
-  let added=0, updated=0;
-  remoteCards.forEach(base=>{
-    if(!base || !base.id || !base.word) return;
-    const existing=byId.get(base.id);
-    const normalized={
-      ...base,
-      translation:base.translation||'',
-      lineTranslation:base.lineTranslation||'',
-      level:base.level||heuristicLevel(base.word,base.translation||''),
-      excluded:false,
-      source:'builtin',
-      audioUrl:base.audioUrl?catalogAudioBase(base.audioUrl):base.audioUrl
-    };
-    if(existing){
-      // Canonical admin content is authoritative for built-in cards.
-      const progress={
-        id:existing.id, mastered:existing.mastered||false, reps:existing.reps||0,
-        box:existing.box, dueDate:existing.dueDate, lastReviewed:existing.lastReviewed,
-        excluded:existing.excluded||false, created:existing.created||Date.now()
-      };
-      Object.assign(existing, normalized, progress);
-      updated++;
+      if(hit && hit.en && !isMetaGloss(hit.en)){
+        c.translation = hit.en; fixed++;
+        issues.push({type:'fixed', word:c.word, was:'(empty/bad)', now:hit.en});
+      } else {
+        issues.push({type:'missing', word:c.word, was:c.translation||'(none)', now:''});
+      }
+      return;
+    }
+    if(hit && hit.en && !isMetaGloss(hit.en) && !glossesOverlap(c.translation, hit.en)){
+      // auto-apply dictionary suggestion
+      const was = c.translation;
+      c.translation = hit.en;
+      fixed++;
+      issues.push({type:'fixed', word:c.word, was:was, now:hit.en});
     } else {
-      byId.set(base.id,{...normalized, mastered:false,reps:0,box:null,dueDate:null,lastReviewed:null,created:Date.now()});
-      added++;
+      ok++;
     }
   });
-  cards=[...byId.values()];
-  persistCards();
-  renderAll();
-  return {added,updated};
-}
-async function syncCatalog(showMsg=true){
-  const status=document.getElementById('catalogStatus');
-  try{
-    if(showMsg){status.style.color='var(--ink-soft)';status.textContent='Syncing latest built-in content…';}
-    const res=await fetch(CATALOG_URL+'?t='+Date.now(),{cache:'no-store'});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const data=await res.json();
-    const result=applyCatalogToMemory(data);
-    document.getElementById('catalogVersion').textContent=`Catalog version: ${data.version||'unknown'} · updated ${data.updatedAt||'unknown'}`;
-    status.style.color='var(--good)';
-    status.textContent=`✓ Synced ${result.added} new and ${result.updated} updated built-in cards.`;
-    renderLibrary();
-  }catch(e){
-    status.style.color='var(--bad)';
-    status.textContent='Built-in catalog unavailable — the app still works with your local deck. '+e.message;
+  persistCards(); renderAll();
+  msg.style.color = 'var(--ink-soft)';
+  msg.textContent = `Checked · ${ok} ok · ${fixed} auto-fixed · ${issues.filter(i=>i.type==='missing').length} still missing`;
+  if(issues.length){
+    report.style.display = 'block';
+    report.innerHTML = issues.slice(0, 80).map(i => {
+      if(i.type === 'fixed') return `<div style="margin:4px 0; color:var(--good);"><strong>${escapeHtml(i.word)}</strong>: “${escapeHtml(i.was)}” → “${escapeHtml(i.now)}”</div>`;
+      return `<div style="margin:4px 0; color:var(--bad);"><strong>${escapeHtml(i.word)}</strong> still missing translation</div>`;
+    }).join('') + (issues.length > 80 ? `<div class="subtle">…and ${issues.length-80} more</div>` : '');
+  } else {
+    report.style.display = 'none';
   }
+});
+
+async function translateLineFree(de){
+  // MyMemory free endpoint
+  const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(de) + '&langpair=de|en';
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const data = await res.json();
+  const t = (data.responseData && data.responseData.translatedText) || '';
+  if(/MYMEMORY WARNING|QUERY LENGTH|INVALID/i.test(t)) throw new Error(t.slice(0, 80));
+  return t.trim();
 }
-function renderLibrary(){
-  const wrap=document.getElementById('libraryList');
-  if(!wrap) return;
-  const musicals=Array.isArray(builtInCatalog.musicals)?builtInCatalog.musicals:[];
-  if(!musicals.length){
-    wrap.innerHTML='<div class="empty">No built-in musicals are published yet. Add entries to <code>data/catalog.json</code> in your repository.</div>';
+
+document.getElementById('translateLinesBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('translateLinesBtn');
+  const msg = document.getElementById('aiMsg');
+  const todo = cards.filter(c => !c.excluded && c.line && !(c.lineTranslation && c.lineTranslation.trim()));
+  // unique lines
+  const byLine = new Map();
+  todo.forEach(c => {
+    const k = c.line.trim();
+    if(!byLine.has(k)) byLine.set(k, []);
+    byLine.get(k).push(c);
+  });
+  const lines = [...byLine.keys()];
+  if(!lines.length){ msg.textContent = 'All example lines already have English (or no lines).'; return; }
+  btn.disabled = true;
+  let done = 0, ok = 0, fail = 0;
+  for(const line of lines){
+    msg.textContent = `Translating lines… ${done+1}/${lines.length}`;
+    try{
+      const en = await translateLineFree(line);
+      byLine.get(line).forEach(c => { c.lineTranslation = en; });
+      ok++;
+    }catch(e){
+      fail++;
+      console.warn('line translate', line, e);
+    }
+    done++;
+    persistCards();
+    await new Promise(r => setTimeout(r, 350));
+  }
+  renderAll();
+  btn.disabled = false;
+  msg.style.color = fail ? 'var(--ink-soft)' : 'var(--good)';
+  msg.textContent = `Line translations: ${ok} ok, ${fail} failed (free API limits). Open a card to edit any bad ones.`;
+});
+
+async function geminiGenerate(prompt, key){
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key);
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      contents:[{ parts:[{ text: prompt }] }],
+      generationConfig:{ temperature: 0.2, maxOutputTokens: 4096 }
+    })
+  });
+  if(!res.ok){
+    const t = await res.text().catch(()=> '');
+    throw new Error('Gemini HTTP '+res.status+' '+t.slice(0,180));
+  }
+  const data = await res.json();
+  const textOut = (((data.candidates||[])[0]||{}).content||{}).parts;
+  const joined = (textOut||[]).map(p=>p.text||'').join('');
+  return joined.trim();
+}
+
+document.getElementById('aiReviewBtn').addEventListener('click', async ()=>{
+  const key = (document.getElementById('geminiKey').value || '').trim();
+  const msg = document.getElementById('aiMsg');
+  const report = document.getElementById('checkReport');
+  if(!key){
+    msg.style.color = 'var(--bad)';
+    msg.textContent = 'Paste a free Gemini API key first (aistudio.google.com/apikey).';
     return;
   }
-  wrap.innerHTML=musicals.map(m=>{
-    const mc=(builtInCatalog.cards||[]).filter(c=>c.musical===m.name || c.musical===m.id).length;
-    const songs=Array.isArray(m.songs)?m.songs:[];
-    return `<div class="songbox">
-      <b>${escapeHtml(m.name||m.id)}</b>
-      <div><small>${mc} vocabulary cards · ${songs.length} songs</small></div>
-      ${m.description?`<div class="hint">${escapeHtml(m.description)}</div>`:''}
-      <div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap;">
-        ${songs.slice(0,8).map(s=>`<button class="btn ghost small" data-built-song="${escapeHtml(s.id||s.title)}">${escapeHtml(s.title||s.id)}</button>`).join('')}
-      </div>
-    </div>`;
-  }).join('');
-  wrap.querySelectorAll('[data-built-song]').forEach(b=>b.addEventListener('click',()=>{
-    const song=(builtInCatalog.musicals||[]).flatMap(m=>m.songs||[]).find(s=>(s.id||s.title)===b.dataset.builtSong);
-    if(song && song.lrc) loadBuiltInSong(song);
-  }));
-}
-async function loadBuiltInSong(song){
-  try{
-    const res=await fetch(new URL(song.lrc,document.baseURI).href+'?t='+Date.now(),{cache:'no-store'});
-    if(!res.ok) throw new Error('LRC HTTP '+res.status);
-    const text=await res.text();
-    const lines=[];
-    text.split(/\r?\n/).forEach(line=>{
-      const ms=[...line.matchAll(/\[(\d{1,2}):(\d{2})(\.\d{1,3})?\]/g)];
-      const clean=line.replace(/\[\d{1,2}:\d{2}(\.\d{1,3})?\]/g,'').trim();
-      if(!clean) return;
-      if(ms.length) ms.forEach(m=>lines.push({
-        text:clean,song:song.title||song.id,time:+m[1]*60+parseFloat(m[2]+(m[3]||'0')),endTime:null
-      }));
-      else lines.push({text:clean,song:song.title||song.id,time:null,endTime:null});
-    });
-    lines.sort((a,b)=>(a.time??0)-(b.time??0));
-    lines.forEach((l,i)=>{if(l.time!==null){const next=lines.slice(i+1).find(x=>x.time!==null);l.endTime=next?next.time:l.time+4.5;}});
-    lrcLines=lines.map(l=>({...l,audioUrl:song.audio?catalogAudioBase(song.audio):''}));
-    document.querySelector('[data-tab="import"]').click();
-    renderLrcLines();
-    document.getElementById('showInput').value=song.musical||'';
-    document.getElementById('mp3Status').textContent='Built-in audio ready ✓';
-    document.getElementById('mp3Status').style.color='var(--good)';
-  }catch(e){ alert('Could not load this built-in song: '+e.message); }
-}
-
-document.getElementById('syncCatalogBtn').addEventListener('click',()=>syncCatalog(true));
-
-// ---------- startup ----------
-async function bootApp(){
-  loadCards();
-  renderLibrary();
-  await syncCatalog(false);
+  try{ localStorage.setItem(GEMINI_KEY_STORAGE, key); }catch(e){}
+  const btn = document.getElementById('aiReviewBtn');
+  btn.disabled = true;
+  // batch cards that need work or sample of all non-excluded
+  const pool = cards.filter(c => !c.excluded);
+  if(!pool.length){ msg.textContent = 'No cards to review.'; btn.disabled=false; return; }
+  const batchSize = 12;
+  let updated = 0, batches = 0;
+  const notes = [];
+  for(let i=0;i<pool.length;i+=batchSize){
+    const batch = pool.slice(i, i+batchSize);
+    msg.style.color = 'var(--ink-soft)';
+    msg.textContent = `AI review… ${Math.min(i+batchSize, pool.length)}/${pool.length}`;
+    const payload = batch.map(c => ({
+      id: c.id,
+      word: c.word,
+      translation: c.translation || '',
+      line: c.line || '',
+      lineTranslation: c.lineTranslation || ''
+    }));
+    const prompt = `You are a careful German–English learning assistant for song lyrics.
+For each item, fix mistakes. Return ONLY a JSON array (no markdown) with objects:
+{"id":"...","word":"corrected German lemma if needed else same","translation":"short natural English gloss 1-6 words for the word","lineTranslation":"natural English for the full line if line is non-empty else empty","ok":true/false,"note":"brief note if something was wrong"}
+Rules:
+- translation must be a real meaning, NEVER grammar labels like "imperative of …"
+- keep the sense from the lyric line when possible
+- if the German word is a clear conjugation, still give the meaning of that form (e.g. will → want)
+- do not invent words; keep word close to input unless obvious typo
+Items:
+${JSON.stringify(payload)}`;
+    try{
+      let raw = await geminiGenerate(prompt, key);
+      raw = raw.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/i,'').trim();
+      const m = raw.match(/\[[\s\S]*\]/);
+      if(m) raw = m[0];
+      const results = JSON.parse(raw);
+      results.forEach(r => {
+        const card = cards.find(c => c.id === r.id);
+        if(!card) return;
+        if(r.word && String(r.word).trim()){
+          const nw = String(r.word).trim();
+          if(nw !== card.word){ card.word = nw; updated++; }
+        }
+        if(r.translation && String(r.translation).trim() && !isMetaGloss(r.translation)){
+          const nt = String(r.translation).trim();
+          if(nt !== (card.translation||'')){ card.translation = nt; updated++; }
+        }
+        if(r.lineTranslation && String(r.lineTranslation).trim()){
+          const nl = String(r.lineTranslation).trim();
+          if(nl !== (card.lineTranslation||'')){ card.lineTranslation = nl; updated++; }
+        }
+        // always ensure level
+        if(!card.level || card.level === '?') card.level = heuristicLevel(card.word, card.translation||'');
+        if(r.note) notes.push({word: card.word, note: r.note});
+      });
+      persistCards();
+    }catch(e){
+      console.error(e);
+      failures++;
+      msg.style.color = 'var(--bad)';
+      msg.textContent = 'AI batch failed: ' + (e.message||e) + ' — continuing…';
+    }
+    await new Promise(r => setTimeout(r, 400));
+  }
   renderAll();
-}
-bootApp();
-window.addEventListener('beforeunload',persistCards);
+  btn.disabled = false;
+  msg.style.color = failures ? 'var(--ink-soft)' : 'var(--good)';
+  msg.textContent = `AI review done · ${updated} fields updated · ${failures} batch error(s).`;
+  if(notes.length){
+    report.style.display = 'block';
+    report.innerHTML = notes.slice(0, 40).map(n =>
+      `<div style="margin:4px 0;"><strong>${escapeHtml(n.word)}</strong>: ${escapeHtml(n.note)}</div>`
+    ).join('');
+  }
+});
+
 
 loadCards();
 </script>
+
+</body>
+</html>
