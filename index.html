@@ -24,7 +24,15 @@
 
 <section id="studyView" class="panel hidden"><div id="setup"><h2 style="font:600 23px Georgia,serif;margin:0">Study</h2><p class="muted">Choose a Musical and difficulty, then study in groups of exactly 10.</p><div class="filters"><select id="studyMusical"><option value="">Choose a Musical…</option></select><select id="studyMode"><option value="due">New + due</option><option value="all">All words</option><option value="weak">Learning</option><option value="mastered">Learned</option></select><select id="studyOrder"><option value="level">Easiest first</option><option value="alpha">A–Z</option><option value="random">Random</option></select><span id="studyCount" class="muted"></span></div><div><div class="muted">Difficulty</div><div class="pills" id="studyLevels"></div></div><div class="row" style="margin-top:12px"><button class="btn primary" id="start">Start 10-word group</button><button class="btn ghost" id="shuffleSetup">↻ Shuffle</button></div></div><div id="session" class="hidden studybox"></div></section>
 
-<p style="text-align:center;color:#dfc09a;font-size:13px;margin-top:16px">For your own private uploads, use <a href="https://tonghutian.github.io/german/" style="color:#e5c477;font-weight:700">the private uploader</a>.</p>
+<div class="notice" style="margin-top:18px;text-align:center">
+<strong>Saved data</strong><br>
+<span class="tiny">Download a backup of your study progress and personal edits, or restore them later.</span>
+<div class="row" style="justify-content:center;margin-top:9px">
+<button class="btn ghost" id="downloadSavedData" type="button">Download saved data</button>
+<button class="btn ghost" id="restoreSavedData" type="button">Restore saved data</button>
+<input id="restoreSavedDataFile" type="file" accept="application/json,.json" class="hidden">
+</div></div>
+<p style="text-align:center;color:#dfc09a;font-size:13px;margin-top:16px">For your own private uploads, use <a href="https://tonghutian.github.io/german/" target="_blank" rel="noopener noreferrer" style="color:#e5c477;font-weight:700">the private uploader</a>.</p>
 </div>
 
 <div id="editModal" class="modal hidden"><div class="modalbox"><div class="top"><div><h2 style="font:600 23px Georgia,serif;margin:0">Edit flashcard</h2><p class="muted">Your changes are saved only in this browser.</p></div><button class="btn ghost" id="closeEdit">Close</button></div><form id="editForm"><div class="modalgrid"><div class="modalfield"><label>Word</label><input id="editWord" required></div><div class="modalfield"><label>Translation</label><input id="editTranslation"></div><div class="modalfield"><label>Level</label><select id="editLevel"><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div><div class="modalfield"><label>Status</label><select id="editStatus"><option value="new">New</option><option value="learning">Learning</option><option value="mastered">Mastered</option></select></div><div class="modalfield full"><label>Example line (German)</label><textarea id="editLine"></textarea></div><div class="modalfield full"><label>Example line (English)</label><textarea id="editLineEn"></textarea></div><div class="modalfield"><label>Collection / show</label><input id="editShow"></div><div class="modalfield"><label>Song</label><input id="editSong"></div><div class="modalfield full"><label>Note</label><textarea id="editNote" placeholder="Optional note"></textarea></div></div><label class="check"><input type="checkbox" id="editExclude"> Exclude this word from study</label><div class="row" style="justify-content:flex-end;margin-top:12px"><button type="button" class="btn danger" id="deleteCard">Delete from my browser</button><button type="button" class="btn ghost" id="cancelEdit">Cancel</button><button class="btn primary">Save changes</button></div></form></div></div>
@@ -63,6 +71,48 @@ $('editForm').onsubmit=e=>{e.preventDefault();if(!editingId)return;const c=cards
 $('deleteCard').onclick=()=>{if(!editingId)return;if(!confirm('Remove this card from your study deck in this browser?'))return;progress[editingId]={...P(editingId),excluded:true};save();cards=cards.filter(c=>c.id!==editingId);queue=queue.filter(c=>c.id!==editingId);closeEdit();renderWords();renderStudy()};$('closeEdit').onclick=closeEdit;$('cancelEdit').onclick=closeEdit;$('editModal').onclick=e=>{if(e.target===$('editModal'))closeEdit()};
 $('start').onclick=start;$('shuffleSetup').onclick=()=>{const p=orderedPool();shuffle(p);queue=p.slice(0,10);if(queue.length){idx=0;$('setup').classList.add('hidden');$('session').classList.remove('hidden');renderCard()}};$('prev').onclick=()=>{pageNo--;renderWords()};$('next').onclick=()=>{pageNo++;renderWords()};$('wordsSearch').oninput=()=>{pageNo=1;renderWords()}; $('wordsSearchField').onchange=()=>{pageNo=1;renderWords()};$('wordsLevel').onchange=()=>{pageNo=1;renderWords()};$('wordsMusical').onchange=e=>{if(e.target.value)loadActive(e.target.value,'words')};$('studyMusical').onchange=e=>{if(e.target.value)loadActive(e.target.value,'study')};$('studyMode').onchange=renderStudy;$('studyOrder').onchange=renderStudy;document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>setView(b.dataset.view));$('wordsBack').onclick=()=>setView('library');
 (async()=>{try{catalog=await getIndex();fillSelect('wordsMusical');fillSelect('studyMusical');renderLibrary();$('status').textContent=`${catalog.musicals.length} Musicals ready`;}catch(e){$('status').textContent='Could not load catalog';console.error(e)}})();
+</script>
+<!-- study-ux-v2 -->
+<script>
+(function(){
+  function downloadSavedData(){
+    const payload={version:2,app:'Learn German Through Music',exportedAt:new Date().toISOString(),progress:progress,settings:{active:active,levels:[...levels],studyMode:$('studyMode')?.value||'due',studyOrder:$('studyOrder')?.value||'level'}};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='learn-german-through-music-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  async function restoreSavedData(file){
+    const data=JSON.parse(await file.text());
+    const incoming=data&&data.progress&&typeof data.progress==='object'?data.progress:null;
+    if(!incoming)throw Error('This file does not contain saved study data.');
+    localStorage.setItem(PROG,JSON.stringify(incoming));
+    alert('Saved data restored. The page will reload.');location.reload();
+  }
+  function wireBackup(){
+    const d=$('downloadSavedData'),r=$('restoreSavedData'),f=$('restoreSavedDataFile');
+    if(d)d.onclick=downloadSavedData;
+    if(r&&f){r.onclick=()=>f.click();f.onchange=()=>{const file=f.files?.[0];if(!file)return;restoreSavedData(file).catch(e=>alert('Could not restore this file: '+e.message)).finally(()=>f.value='');};}
+  }
+  let lastId=null,lastNode=null;
+  function syncStudyCard(){
+    const session=$('session');const cardEl=session?.querySelector('.card');
+    if(!cardEl){if(lastNode){stop();lastNode=null;lastId=null;}return;}
+    const c=queue[idx];if(!c)return;
+    if(c.id===lastId&&cardEl===lastNode)return;
+    stop();lastId=c.id;lastNode=cardEl;
+    setTimeout(()=>{const now=$('session')?.querySelector('.card');if(now===cardEl&&queue[idx]?.id===c.id)play(c);},120);
+    const title=c.song||c.show||c.musical||'';
+    if(title&&!cardEl.querySelector('[data-song-name]')){
+      const label=document.createElement('div');label.dataset.songName='1';label.className='tiny';label.style.marginTop='9px';label.textContent='Song: '+title;
+      const front=cardEl.querySelector('.front');if(front)front.appendChild(label);
+    }
+  }
+  function observe(){
+    const s=$('session');if(!s)return;
+    new MutationObserver(syncStudyCard).observe(s,{childList:true,subtree:true});
+    setInterval(syncStudyCard,250);
+  }
+  wireBackup();observe();
+})();
 </script>
 </body>
 
