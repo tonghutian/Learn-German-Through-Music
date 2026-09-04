@@ -81,5 +81,35 @@
     },true);
   }
 
-  loadOriginal(function(){setTimeout(installEditor,0)});
+  function installBackAudio(){
+    const session=document.getElementById('session');
+    if(!session) return;
+    const addButton=function(){
+      const back=session.querySelector('.card .back');
+      if(!back || back.querySelector('[data-manual-audio]')) return;
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='btn ghost';
+      b.dataset.manualAudio='1';
+      b.textContent='▶ Play audio';
+      b.style.marginTop='14px';
+      b.style.color='var(--paper)';
+      b.style.borderColor='var(--gold)';
+      b.onclick=function(e){
+        e.stopPropagation();
+        const listen=document.getElementById('listen');
+        if(listen) listen.click();
+      };
+      back.appendChild(b);
+    };
+    new MutationObserver(addButton).observe(session,{childList:true,subtree:true});
+    addButton();
+  }
+
+  loadOriginal(function(){
+    setTimeout(function(){
+      installEditor();
+      installBackAudio();
+    },0);
+  });
 })();
