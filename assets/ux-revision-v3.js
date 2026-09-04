@@ -3,7 +3,7 @@
 
   function loadOriginal(done){
     const s=document.createElement('script');
-    s.src='assets/ux-revision-v3-original.js?v=6';
+    s.src='assets/ux-revision-v3-original.js?v=7';
     s.onload=done;
     s.onerror=function(){console.error('Could not load original study UI')};
     document.head.appendChild(s);
@@ -13,19 +13,18 @@
     const form=document.getElementById('editForm');
     const modal=document.getElementById('editModal');
     if(!form || !modal) return;
-
-    if(typeof window.openEdit==='function' && !window.openEdit.__repairWrapped){
-      const originalOpenEdit=window.openEdit;
-      const wrapped=function(id){
-        modal.dataset.editId=String(id||'');
-        return originalOpenEdit(id);
-      };
-      wrapped.__repairWrapped=true;
-      window.openEdit=wrapped;
-    }
-
     if(form.dataset.editorRepairInstalled==='1') return;
     form.dataset.editorRepairInstalled='1';
+
+    document.addEventListener('click',function(e){
+      const button=e.target.closest && e.target.closest('[data-edit],#editStudyBtn');
+      if(!button) return;
+      let id=button.getAttribute('data-edit') || '';
+      if(!id){
+        try { id=eval('(typeof queue!=="undefined" && queue[idx]) ? queue[idx].id : ""'); } catch(err) {}
+      }
+      if(id) modal.dataset.editId=String(id);
+    },true);
 
     form.addEventListener('submit',function(e){
       e.preventDefault();
@@ -39,7 +38,7 @@
       if(!card) return;
       try { prog=eval('progress'); } catch(err) { prog={}; }
 
-      const val=function(id){const el=document.getElementById(id);return el?el.value:''};
+      const val=function(name){const el=document.getElementById(name);return el?el.value:''};
       const word=val('editWord').trim();
       if(!word){document.getElementById('editWord').focus();return;}
 
