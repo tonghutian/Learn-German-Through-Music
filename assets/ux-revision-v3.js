@@ -1,11 +1,79 @@
-(function(){'use strict';
-const ORIGINAL='assets/ux-revision-v3-original.js';
-function loadOriginal(done){const s=document.createElement('script');s.src=ORIGINAL+'?v=4';s.onload=done;s.onerror=()=>console.error('Could not load original study UI');document.head.appendChild(s)}
-function prog(){try{return JSON.parse(localStorage.getItem('ldm-progress-v4')||'{}')||{}}catch{return {}}}
-function saveProg(p){localStorage.setItem('ldm-progress-v4',JSON.stringify(p))}
-function getCards(){try{return cards||[]}catch{return []}}
-function findId(word){const c=getCards().find(x=>String(x.word||'').trim()===String(word||'').trim());return c?.id||''}
-function currentId(){const fc=document.querySelector('.final-card');return fc?.dataset.id||fc?.dataset.editId||''}
-function syncQuiz(){const p=prog();document.querySelectorAll('[data-l]').forEach(b=>{const x=p[b.dataset.l];if(x?.word)b.textContent=x.word});document.querySelectorAll('[data-r]').forEach(b=>{const x=p[b.dataset.r];if(x?.translation)b.textContent=x.translation})}
-function sync(id,data){const row=document.querySelector('#wordBody tr [data-id="'+CSS.escape(id)+'"]')?.closest('tr');if(row){for(const f of ['word','translation','level','line']){const el=row.querySelector('[data-f="'+f+'"]');if(el)el.value=data[f]??''}const b=row.querySelector('.status-badge');if(b){const st=data.mastered?'learned':((data.reps||0)>0?'learning':'new');b.textContent=st;b.className='status-badge '+st}}const fc=document.querySelector('.final-card');if(fc&&((fc.dataset.id||fc.dataset.editId)===id)){fc.dataset.editId=id;const q=(sel,v)=>{const x=fc.querySelector(sel);if(x)x.textContent=v||''};q('.final-word',data.word);q('.final-meaning',data.translation||'—');q('.final-source',[data.show,data.song].filter(Boolean).join(' · '));q('.final-lyric',data.line);q('.final-lyric-en',data.lineTranslation);q('.leveltag',data.level);q('.final-card-status',data.mastered?'learned':((data.reps||0)>0?'learning':'new'))}syncQuiz()}
-function hook(){document.addEventListener('click',e=>{const b=e.target.closest('#editStudyBtn');if(!b)return;e.preventDefault();e.stopImmediatePropagation();const fc=document.querySelector('.final-card'),word=fc?.querySelector('.final-word')?.textContent?.trim()||'',id=fc?.dataset.id||findId(word);if(!id)return;if(fc)fc.dataset.editId=id;const modal=document.getElementById('editModal');if(modal)modal.dataset.repairId=id;if(typeof openEdit==='function')openEdit(id)},true);const form=document.getElementById('editForm');if(form)form.addEventListener('submit',e=>{const id=document.getElementById('editModal')?.dataset.repairId||currentId()||'';if(!id)return;e.preventDefault();e.stopImmediatePropagation();const p=prog(),old=p[id]||{},d={word:document.getElementById('editWord').value.trim(),translation:document.getElementById('editTranslation').value.trim(),level:document.getElementById('editLevel').value,line:document.getElementById('editLine').value,lineTranslation:document.getElementById('editLineEn').value,show:document.getElementById('editShow').value,song:document.getElementById('editSong').value,note:document.getElementById('editNote').value,excluded:document.getElementById('editExclude').checked};const st=document.getElementById('editStatus').value;d.mastered=st==='mastered';d.reps=st==='new'?0:(st==='learning'?Math.max(1,old.reps||0):old.reps||0);p[id]={...old,...d};saveProg(p);const c=getCards().find(x=>x.id===id);if(c)Object.assign(c,d);document.getElementById('editModal').classList.add('hidden');sync(id,d)},true);const obs=new MutationObserver(syncQuiz);obs.observe(document.getElementById('session')||document.body,{childList:true,subtree:true});setInterval(syncQuiz,300)}loadOriginal(hook)})();
+(function(){
+  'use strict';
+
+  function loadOriginal(done){
+    const s=document.createElement('script');
+    s.src='assets/ux-revision-v3-original.js?v=5';
+    s.onload=done;
+    s.onerror=function(){console.error('Could not load original study UI')};
+    document.head.appendChild(s);
+  }
+
+  function installEditor(){
+    const form=document.getElementById('editForm');
+    const modal=document.getElementById('editModal');
+    if(!form || !modal) return;
+    if(form.dataset.editorInstalled==='1') return;
+    form.dataset.editorInstalled='1';
+
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+
+      const id=window.editingId;
+      if(!id) return;
+      const c=(window.cards||[]).find(function(x){return x.id===id});
+      if(!c) return;
+
+      const p=Object.assign({}, (window.progress&&window.progress[id]) || {});
+      const get=function(name){
+        const el=document.getElementById(name);
+        return el ? el.value : '';
+      };
+
+      const word=get('editWord').trim();
+      if(!word){document.getElementById('editWord').focus();return;}
+
+      p.word=word;
+      p.translation=get('editTranslation').trim();
+      p.level=get('editLevel') || c.level || 'A1';
+      p.line=get('editLine').trim();
+      p.lineTranslation=get('editLineEn').trim();
+      p.show=get('editShow').trim();
+      p.song=get('editSong').trim();
+      p.note=get('editNote').trim();
+      p.excluded=!!document.getElementById('editExclude')?.checked;
+
+      const status=get('editStatus');
+      p.mastered=status==='mastered';
+      p.reps=status==='new' ? 0 : (status==='learning' ? Math.max(1,p.reps||0) : (p.reps||0));
+
+      window.progress[id]=p;
+      if(typeof window.save==='function') window.save();
+      else localStorage.setItem('ldm-progress-v4',JSON.stringify(window.progress));
+
+      Object.assign(c,{
+        word:p.word,translation:p.translation,level:p.level,line:p.line,
+        lineTranslation:p.lineTranslation,show:p.show,song:p.song,note:p.note,
+        excluded:p.excluded,mastered:p.mastered,reps:p.reps
+      });
+
+      [window.queue||[]].forEach(function(list){
+        list.forEach(function(x){
+          if(x && x.id===id) Object.assign(x,c);
+        });
+      });
+
+      modal.classList.add('hidden');
+      window.editingId=null;
+
+      if(typeof window.renderWords==='function') window.renderWords();
+      if(typeof window.renderStudy==='function') window.renderStudy();
+      if(typeof window.renderCard==='function' && window.queue && window.queue.some(function(x){return x.id===id})) window.renderCard();
+    },true);
+  }
+
+  loadOriginal(function(){
+    setTimeout(installEditor,0);
+  });
+})();
