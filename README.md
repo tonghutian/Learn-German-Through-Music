@@ -1,1 +1,1 @@
-# Learn-German-Through-Music
+Learn German Through Music
