@@ -1,0 +1,60 @@
+name: Finalize study fixes
+on:
+  push:
+    paths:
+      - '.github/workflows/finalize-study-fixes.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch study card editing and audio
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          old="""function play(c){stop();if(!c||!c.audioUrl||c.startTime==null)return;audio=new Audio(new URL(c.audioUrl,document.baseURI));audio.currentTime=Number(c.startTime);const end=Number(c.endTime??(c.startTime+4.5));const a=audio;a.ontimeupdate=()=>{if(a.currentTime>=end){a.pause();a.ontimeupdate=null}};a.play().catch(()=>{})}"""
+          new="""function songAudioUrl(c){
+            if(!c)return null;
+            if(c.audioUrl)return new URL(c.audioUrl,document.baseURI).href;
+            const key=String(c.song||'').normalize('NFC').toLowerCase().replace(/\\.[^.]+$/,'').replace(/^\\d+[\\s._-]*/,'').replace(/[^a-z0-9äöüß]+/g,'');
+            if(!key)return null;
+            for(const m of (catalog.musicals||[])) for(const song of (m.songs||[])){
+              const sk=String(song.title||'').normalize('NFC').toLowerCase().replace(/[^a-z0-9äöüß]+/g,'');
+              if(sk===key || sk.includes(key) || key.includes(sk)) return new URL(song.audio,document.baseURI).href;
+            }
+            return null;
+          }
+          function play(c){
+            stop();
+            if(!c||c.startTime==null)return;
+            const url=songAudioUrl(c); if(!url)return;
+            audio=new Audio(url);
+            const start=Number(c.startTime); if(!Number.isFinite(start))return;
+            audio.currentTime=start;
+            const end=Number(c.endTime??(start+4.5));
+            const a=audio;
+            a.ontimeupdate=()=>{if(Number.isFinite(end)&&a.currentTime>=end){a.pause();a.ontimeupdate=null}};
+            a.play().catch(()=>{});
+          }"""
+          if old not in s: raise SystemExit('audio function pattern not found')
+          s=s.replace(old,new,1)
+
+          old2="""$('editForm').onsubmit=e=>{e.preventDefault();if(!editingId)return;const c=cards.find(x=>x.id===editingId);const p=P(editingId);p.word=$('editWord').value.trim();p.translation=$('editTranslation').value.trim();p.level=$('editLevel').value;p.line=$('editLine').value;p.lineTranslation=$('editLineEn').value;p.show=$('editShow').value;p.song=$('editSong').value;p.note=$('editNote').value;p.excluded=$('editExclude').checked;const st=$('editStatus').value;p.mastered=st==='mastered';if(st==='new')p.reps=0;progress[editingId]=p;save();Object.assign(c,{word:p.word,translation:p.translation,level:p.level,line:p.line,lineTranslation:p.lineTranslation,show:p.show,song:p.song,note:p.note,excluded:p.excluded,mastered:p.mastered});closeEdit();renderWords();renderStudy();if(queue.some(x=>x.id===editingId))renderCard()};"""
+          new2="""$('editForm').onsubmit=e=>{e.preventDefault();if(!editingId)return;const id=editingId;const c=cards.find(x=>x.id===id);if(!c)return;const p={...P(id)};p.word=$('editWord').value.trim();p.translation=$('editTranslation').value.trim();p.level=$('editLevel').value;p.line=$('editLine').value;p.lineTranslation=$('editLineEn').value;p.show=$('editShow').value;p.song=$('editSong').value;p.note=$('editNote').value;p.excluded=$('editExclude').checked;const st=$('editStatus').value;p.mastered=st==='mastered';if(st==='new')p.reps=0;progress[id]=p;save();Object.assign(c,{word:p.word,translation:p.translation,level:p.level,line:p.line,lineTranslation:p.lineTranslation,show:p.show,song:p.song,note:p.note,excluded:p.excluded,mastered:p.mastered});[...(typeof groupWords!=='undefined'?groupWords:[]),...(typeof studyQueue!=='undefined'?studyQueue:[]),...(typeof queue!=='undefined'?queue:[])].filter(x=>x&&x.id===id).forEach(x=>Object.assign(x,{word:p.word,translation:p.translation,level:p.level,line:p.line,lineTranslation:p.lineTranslation,show:p.show,song:p.song,note:p.note,excluded:p.excluded,mastered:p.mastered}));closeEdit();renderWordsV3?.();renderWords?.();renderStudy?.();if(typeof groupWords!=='undefined'&&groupWords.some(x=>x.id===id))renderStudyCard();else if(typeof queue!=='undefined'&&queue.some(x=>x.id===id))renderCard()};"""
+          if old2 not in s: raise SystemExit('edit function pattern not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name github-actions
+          git config user.email github-actions@users.noreply.github.com
+          git add index.html
+          git commit -m 'Fix flashcard edit persistence and built-in audio' || true
+          git rm .github/workflows/finalize-study-fixes.yml
+          git commit -m 'Remove one-time fix workflow' || true
+          git push
