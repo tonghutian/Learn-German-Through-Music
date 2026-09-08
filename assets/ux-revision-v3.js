@@ -96,9 +96,12 @@
       b.style.color='var(--paper)';
       b.style.borderColor='var(--gold)';
       b.onclick=function(e){
+        e.preventDefault();
         e.stopPropagation();
-        const listen=document.getElementById('listen');
-        if(listen) listen.click();
+        try {
+          const c=eval('(typeof groupWords!=="undefined" ? groupWords[studyIndex] : (typeof queue!=="undefined" ? queue[idx] : null))');
+          if(typeof play==='function' && c) play(c);
+        } catch(err) { console.error('Flashcard audio error:',err); }
       };
       back.appendChild(b);
     };
