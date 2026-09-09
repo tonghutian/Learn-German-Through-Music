@@ -23,7 +23,7 @@
     const p=readPrefs();
     if(musical) p.musical=musical.value||'';
     if(mode) p.mode=mode.value||'due';
-    if(order) p.order=order.value||'level';
+    if(order) p.order=order.value||'random';
     p.levels=levels;
     p.savedAt=Date.now();
     writePrefs(p);
@@ -39,7 +39,13 @@
     if(!musical||!musical.options||musical.options.length<2)return;
 
     if(p.mode && [...mode.options].some(o=>o.value===p.mode)) mode.value=p.mode;
-    if(p.order && [...order.options].some(o=>o.value===p.order)) order.value=p.order;
+    // Shuffle is the default Study order. Keep an explicitly saved user choice,
+    // but use Random when there is no saved preference yet.
+    if(p.order && [...order.options].some(o=>o.value===p.order)){
+      order.value=p.order;
+    }else if([...order.options].some(o=>o.value==='random')){
+      order.value='random';
+    }
 
     if(Array.isArray(p.levels)){
       const want=new Set(p.levels.map(String));
