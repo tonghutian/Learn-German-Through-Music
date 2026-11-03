@@ -77,16 +77,32 @@ def parse_beolingus(text):
     return d
 
 
-def http_json(url, payload=None, timeout=15):
+def http_json(url, payload=None, timeout=15, attempts=3):
+    # Public translation endpoints occasionally time out or throttle requests.
+    # Retry transient failures rather than silently leaving every affected line blank.
+    for attempt in range(attempts):
+        try:
+            if payload is None:
+                req=urllib.request.Request(url,headers={'User-Agent':'Learn-German-Through-Music/1.0'})
+            else:
+                req=urllib.request.Request(url,data=json.dumps(payload).encode('utf-8'),headers={'Content-Type':'application/json','User-Agent':'Learn-German-Through-Music/1.0'})
+            with urllib.request.urlopen(req,timeout=timeout) as r:
+                return json.loads(r.read().decode('utf-8','replace'))
+        except Exception:
+            if attempt + 1 < attempts: time.sleep(1.5 * (attempt + 1))
+    return None
+
+
+def google_translate(text):
+    # Google's lightweight public web endpoint is a fallback, not a required dependency.
+    url='https://translate.googleapis.com/translate_a/single?'+urllib.parse.urlencode({
+        'client':'gtx','sl':'de','tl':'en','dt':'t','q':text
+    })
+    data=http_json(url,timeout=20)
     try:
-        if payload is None:
-            req=urllib.request.Request(url,headers={'User-Agent':'Learn-German-Through-Music/1.0'})
-        else:
-            req=urllib.request.Request(url,data=json.dumps(payload).encode('utf-8'),headers={'Content-Type':'application/json','User-Agent':'Learn-German-Through-Music/1.0'})
-        with urllib.request.urlopen(req,timeout=timeout) as r:
-            return json.loads(r.read().decode('utf-8','replace'))
+        return ''.join(part[0] for part in data[0] if part and part[0]).strip()[:400]
     except Exception:
-        return None
+        return ''
 
 
 def wiktionary(word):
@@ -170,6 +186,7 @@ def translate_line_one(line,cache):
     cached=cache['lines'].get(key,'')
     if cached: return cached
     result=libretranslate(key)
+    if not result: result=google_translate(key)
     if not result: result=mymemory(key)
     if result: cache['lines'][key]=result
     return result
