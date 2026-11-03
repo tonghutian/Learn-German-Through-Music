@@ -6,6 +6,7 @@ on:
     paths:
       - 'music/**'
       - 'tools/build_catalog.py'
+      - 'tools/fill_translations.py'
       - 'tools/patch_index.py'
       - 'index.html'
       - '.github/workflows/build-catalog.yml'
