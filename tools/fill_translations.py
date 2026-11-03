@@ -237,7 +237,7 @@ def main():
             if c.get('translation') and not suspicious_word_gloss(c.get('translation')): continue
             w=c.get('word','')
             key=norm_word(w)
-            if key and key not in cache['words']: word_jobs[key]=w
+            if key and (key not in cache['words'] or suspicious_word_gloss(cache['words'].get(key))): word_jobs[key]=w
         for c in cards:
             line=(c.get('line') or '').strip()
             if line and not (c.get('lineTranslation') or '').strip() and line not in cache['lines']:
