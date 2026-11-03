@@ -9,6 +9,17 @@ BEOLINGUS_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en
 MYMEMORY_URL = 'https://api.mymemory.translated.net/get'
 LIBRE_URL = 'https://translate.argosopentech.com/translate'
 LEVELS = ['A1','A2','B1','B2','C1','C2']
+
+# Curated overrides for high-confidence corrections. These take precedence over
+# stale machine-generated cache entries and generic single-word translations.
+WORD_OVERRIDES = {
+    'bereit': 'ready; prepared',
+}
+LINE_OVERRIDES = {
+    'Mach dein Herz bereit.': 'Make your heart ready.',
+    'Sei bereit! Sei bereit!': 'Be ready! Be ready!',
+    'Sei bereit.': 'Be ready.',
+}
 META_RE = re.compile(r'\b(imperative|participle|infinitive|subjunctive|indicative|conjugation|declension|genitive|dative|accusative|nominative|plural form|singular form|first-person|second-person|third-person)\b', re.I)
 COMMON = set('aber alle als am an auch auf aus bei bin bis das dass dein deine dem den der des die dir doch du ein eine er es für ganz hat haben ich im in ist ja kann kein mit nach nicht nur oder sie sind so und vom von vor was wenn wie wir zu zum zur'.split())
 
@@ -244,6 +255,13 @@ def main():
     total_filled=0; total_lines=0
     for path in paths:
         data=json.loads(path.read_text(encoding='utf-8')); cards=data.get('cards',[])
+        for c in cards:
+            k=norm_word(c.get('word',''))
+            if k in WORD_OVERRIDES:
+                c['translation']=WORD_OVERRIDES[k]
+            line=(c.get('line') or '').strip()
+            if line in LINE_OVERRIDES:
+                c['lineTranslation']=LINE_OVERRIDES[line]
         for c in cards:
             k=norm_word(c.get('word',''))
             if not c.get('translation') and k:
