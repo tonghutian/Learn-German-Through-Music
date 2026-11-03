@@ -28,6 +28,13 @@ def norm_word(s):
     return re.sub(r"[^A-Za-zÄÖÜäöüßÀ-ÿ'-]", '', str(s or '')).strip("'-").lower()
 
 
+def suspicious_word_gloss(value):
+    # Single-word glosses should not look like full sentences or contain
+    # machine-translation dialogue/punctuation (e.g. question-heavy output).
+    value=str(value or '').strip()
+    return bool(value) and (len(value)>55 or '?' in value or ' – ' in value or '\\n' in value)
+
+
 def clean_gloss(s):
     if not s: return ''
     s = re.sub(r'<[^>]+>', ' ', str(s))
@@ -173,8 +180,9 @@ def level_for(word,builtin,zipf):
 def translate_one(word,builtin,beolingus,cache):
     key=norm_word(word)
     if not key: return ''
-    cached=cache['words'].get(key,'')
-    if cached: return cached
+    curated=WORD_OVERRIDES.get(key)
+    if curated:
+        cache['words'][key]=curated; return curated
     hit=builtin.get(key)
     if hit and hit.get('en'):
         cache['words'][key]=hit['en']; return hit['en']
@@ -185,6 +193,8 @@ def translate_one(word,builtin,beolingus,cache):
             if hit: break
     if hit:
         cache['words'][key]=hit; return hit
+    cached=cache['words'].get(key,'')
+    if cached and not suspicious_word_gloss(cached): return cached
     result=wiktionary(word)
     if not result: result=mymemory(word)
     if result: cache['words'][key]=result
@@ -224,7 +234,7 @@ def main():
         data=json.loads(path.read_text(encoding='utf-8'))
         cards=data.get('cards',[])
         for c in cards:
-            if c.get('translation'): continue
+            if c.get('translation') and not suspicious_word_gloss(c.get('translation')): continue
             w=c.get('word','')
             key=norm_word(w)
             if key and key not in cache['words']: word_jobs[key]=w
@@ -264,7 +274,7 @@ def main():
                 c['lineTranslation']=LINE_OVERRIDES[line]
         for c in cards:
             k=norm_word(c.get('word',''))
-            if not c.get('translation') and k:
+            if (not c.get('translation') or suspicious_word_gloss(c.get('translation'))) and k:
                 en=cache['words'].get(k,'')
                 if en: c['translation']=en; total_filled+=1
             c['level']=level_for(c.get('word',''),builtin,zipf)
